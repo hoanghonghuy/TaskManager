@@ -1,30 +1,31 @@
 ﻿@model TaskManager.Web.ViewModels.CreateTaskViewModel
+
 @{
     ViewData["Title"] = "Tạo công việc mới";
 }
 
-<h1>Tạo công việc mới</h1>
-<hr />
-<div class="row">
-    <div class="col-md-6">
+<div class="card p-4 mx-auto" style="max-width: 600px; margin-top: 20px;">
+    <h1 class="card-title text-center">Tạo công việc mới</h1>
+    <hr />
+    <div class="card-body">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group mb-3">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
+                <label asp-for="Title" class="form-label"></label>
+                <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề công việc" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
             <div class="form-group mb-3">
-                <label asp-for="Description" class="control-label"></label>
-                <textarea asp-for="Description" class="form-control"></textarea>
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Mô tả chi tiết công việc"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="form-group mb-3">
-                <label asp-for="DueDate" class="control-label"></label>
+                <label asp-for="DueDate" class="form-label"></label>
                 <input asp-for="DueDate" class="form-control" />
                 <span asp-validation-for="DueDate" class="text-danger"></span>
             </div>
-            <div class="form-group">
+            <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">Lưu công việc</button>
                 <a asp-action="Index" class="btn btn-secondary">Hủy</a>
             </div>
