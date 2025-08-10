@@ -1,0 +1,44 @@
+﻿@model TaskManager.Data.Models.Task
+
+@{
+    ViewData["Title"] = "Xóa công việc";
+}
+
+<h1>Xóa công việc</h1>
+<h3>Bạn có chắc chắn muốn xóa công việc này?</h3>
+<hr />
+
+<div>
+    <dl class="row">
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.Title)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.Title)
+        </dd>
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.Description)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.Description)
+        </dd>
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.DueDate)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.DueDate)
+        </dd>
+        <dt class="col-sm-3">
+            @Html.DisplayNameFor(model => model.Status)
+        </dt>
+        <dd class="col-sm-9">
+            @Html.DisplayFor(model => model.Status)
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Xóa</button> |
+        <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>

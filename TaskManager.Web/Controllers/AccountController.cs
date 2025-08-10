@@ -1,14 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TaskManager.Data;
 using TaskManager.Data.Models;
 using TaskManager.Web.ViewModels;
-using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace TaskManager.Web.Controllers
 {
+    
     public class AccountController : Controller
     {
         private readonly ApplicationDbContext _context;

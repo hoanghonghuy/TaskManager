@@ -1,0 +1,66 @@
+﻿@model IEnumerable<TaskManager.Data.Models.Task>
+@{
+    ViewData["Title"] = "Danh sách công việc";
+}
+
+<h1>Danh sách công việc</h1>
+<p>
+    <a asp-action="Create" class="btn btn-primary">Tạo công việc mới</a>
+</p>
+
+@if (Model.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Title)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Description)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.DueDate)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Status)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.CreatedAt)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Description)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.DueDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Status)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CreatedAt)
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Sửa</a> |
+                        <a asp-action="Details" asp-route-id="@item.Id">Chi tiết</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Xóa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Chưa có công việc nào được tạo.</p>
+}
