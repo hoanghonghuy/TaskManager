@@ -1,0 +1,113 @@
+﻿@model TaskManager.Data.Models.Task
+
+@{
+    ViewData["Title"] = "Chi tiết công việc";
+}
+
+<div class="card p-4 mx-auto" style="max-width: 600px; margin-top: 20px;">
+    <h1 class="card-title text-center">Chi tiết công việc</h1>
+    <hr />
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Title)
+            </dt>
+            <dd class="col-sm-8">
+                @Html.DisplayFor(model => model.Title)
+            </dd>
+            <dt class="col-sm-4">
+                Danh sách
+            </dt>
+            <dd class="col-sm-8">
+                @if (Model.Project != null)
+                {
+                    @Model.Project.Name
+                }
+                else
+                {
+                    <span>Không có</span>
+                }
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Description)
+            </dt>
+            <dd class="col-sm-8">
+                @Html.DisplayFor(model => model.Description)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.DueDate)
+            </dt>
+            <dd class="col-sm-8">
+                @if (Model.DueDate.HasValue)
+                {
+                    @Model.DueDate.Value.ToShortDateString()
+                }
+                else
+                {
+                    <span>Không có</span>
+                }
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Status)
+            </dt>
+            <dd class="col-sm-8">
+                <span class="badge @(Model.Status == "Completed" ? "bg-success" : "bg-warning text-dark")">@Model.Status</span>
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Priority)
+            </dt>
+            <dd class="col-sm-8">
+                <span class="badge @(Model.Priority == "High" ? "bg-danger" : Model.Priority == "Medium" ? "bg-warning text-dark" : "bg-secondary")">@Model.Priority</span>
+            </dd>
+            <dt class="col-sm-4">
+                Thẻ
+            </dt>
+            <dd class="col-sm-8">
+                @if (Model.TaskTags != null && Model.TaskTags.Any())
+                {
+                    @foreach (var tag in Model.TaskTags.Select(tt => tt.Tag))
+                    {
+                        <span class="badge bg-info text-dark me-1">@tag.Name</span>
+                    }
+                }
+                else
+                {
+                    <span>Không có</span>
+                }
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.CreatedAt)
+            </dt>
+            <dd class="col-sm-8">
+                @Html.DisplayFor(model => model.CreatedAt)
+            </dd>
+        </dl>
+
+        @if (Model.Subtasks != null && Model.Subtasks.Any())
+        {
+            <h5 class="mt-4">Công việc con</h5>
+            <ul class="list-group">
+                @foreach (var subtask in Model.Subtasks)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>@subtask.Title</span>
+                            <a asp-action="Details" asp-route-id="@subtask.Id" class="btn btn-sm btn-info">Xem</a>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa công việc này?');">Xóa</button>
+            </form>
+        </div>
+        <a asp-action="Index" class="btn btn-sm btn-secondary">Quay lại</a>
+    </div>
+</div>

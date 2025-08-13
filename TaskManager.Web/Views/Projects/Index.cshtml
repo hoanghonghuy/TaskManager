@@ -1,0 +1,30 @@
+﻿@model IEnumerable<TaskManager.Data.Models.Project>
+
+@{
+    ViewData["Title"] = "Danh sách công việc";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Danh sách</h1>
+    <a asp-action="Create" class="btn btn-primary">Tạo danh sách mới</a>
+</div>
+
+@if (Model.Any())
+{
+    <ul class="list-group">
+        @foreach (var project in Model)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a asp-controller="Tasks" asp-action="Index" asp-route-projectId="@project.Id">@project.Name</a>
+                <form asp-action="Delete" asp-route-id="@project.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                </form>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="alert alert-info">Chưa có danh sách nào được tạo.</div>
+}

@@ -1,8 +1,42 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model TaskManager.Web.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid mt-4">
+    <div class="text-center">
+        <h1 class="display-4">Chào mừng đến với TaskManager!</h1>
+        <p class="lead">Quản lý công việc cá nhân của bạn một cách hiệu quả.</p>
+    </div>
+
+    <div class="row mt-5 justify-content-center">
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng số công việc</h5>
+                    <h1 class="display-3">@Model.TotalTasks</h1>
+                    <a asp-controller="Tasks" asp-action="Index" class="btn btn-outline-light mt-3">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Công việc chưa hoàn thành</h5>
+                    <h1 class="display-3">@Model.PendingTasks</h1>
+                    <a asp-controller="Tasks" asp-action="Index" asp-route-status="Pending" class="btn btn-outline-light mt-3">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Công việc đã hoàn thành</h5>
+                    <h1 class="display-3">@Model.CompletedTasks</h1>
+                    <a asp-controller="Tasks" asp-action="Index" asp-route-status="Completed" class="btn btn-outline-light mt-3">Xem chi tiết</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

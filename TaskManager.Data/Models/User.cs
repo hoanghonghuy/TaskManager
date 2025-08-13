@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace TaskManager.Data.Models
 {
@@ -9,18 +10,20 @@ namespace TaskManager.Data.Models
 
         [Required]
         [MaxLength(50)]
-        public string Username { get; set; }
+        public string Username { get; set; } = null!;
 
         [Required]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = null!;
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = null!;
+
+        [MaxLength(100)]
+        public string? FullName { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation property để liên kết với Tasks
         public ICollection<Task> Tasks { get; set; } = new List<Task>();
     }
 }

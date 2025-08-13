@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskManager.Data;
 
@@ -11,9 +12,11 @@ using TaskManager.Data;
 namespace TaskManager.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250813043631_AddProjectsAndLinkTasks")]
+    partial class AddProjectsAndLinkTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,24 +48,6 @@ namespace TaskManager.Data.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("TaskManager.Data.Models.Tag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Tags");
-                });
-
             modelBuilder.Entity("TaskManager.Data.Models.Task", b =>
                 {
                     b.Property<int>("Id")
@@ -79,9 +64,6 @@ namespace TaskManager.Data.Migrations
 
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int?>("ParentTaskId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Priority")
                         .IsRequired()
@@ -105,28 +87,11 @@ namespace TaskManager.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentTaskId");
-
                     b.HasIndex("ProjectId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
-                });
-
-            modelBuilder.Entity("TaskManager.Data.Models.TaskTag", b =>
-                {
-                    b.Property<int>("TaskId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TagId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TaskId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("TaskTags");
                 });
 
             modelBuilder.Entity("TaskManager.Data.Models.User", b =>
@@ -175,11 +140,6 @@ namespace TaskManager.Data.Migrations
 
             modelBuilder.Entity("TaskManager.Data.Models.Task", b =>
                 {
-                    b.HasOne("TaskManager.Data.Models.Task", "ParentTask")
-                        .WithMany("Subtasks")
-                        .HasForeignKey("ParentTaskId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("TaskManager.Data.Models.Project", "Project")
                         .WithMany("Tasks")
                         .HasForeignKey("ProjectId");
@@ -190,47 +150,14 @@ namespace TaskManager.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ParentTask");
-
                     b.Navigation("Project");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TaskManager.Data.Models.TaskTag", b =>
-                {
-                    b.HasOne("TaskManager.Data.Models.Tag", "Tag")
-                        .WithMany("TaskTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TaskManager.Data.Models.Task", "Task")
-                        .WithMany("TaskTags")
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Tag");
-
-                    b.Navigation("Task");
-                });
-
             modelBuilder.Entity("TaskManager.Data.Models.Project", b =>
                 {
                     b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("TaskManager.Data.Models.Tag", b =>
-                {
-                    b.Navigation("TaskTags");
-                });
-
-            modelBuilder.Entity("TaskManager.Data.Models.Task", b =>
-                {
-                    b.Navigation("Subtasks");
-
-                    b.Navigation("TaskTags");
                 });
 
             modelBuilder.Entity("TaskManager.Data.Models.User", b =>

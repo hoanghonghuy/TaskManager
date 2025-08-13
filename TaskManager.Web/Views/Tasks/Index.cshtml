@@ -2,10 +2,25 @@
 
 @{
     ViewData["Title"] = "Danh sách công việc";
+    string? searchString = ViewBag.SearchString;
 }
 
 <h1 class="text-center">Danh sách công việc</h1>
-<div class="d-flex justify-content-end mb-3">
+<div class="d-flex justify-content-between mb-3">
+    <div>
+        <a asp-action="Index" asp-route-searchString="@searchString" asp-route-status="" class="btn btn-sm @(ViewBag.Filter == null ? "btn-dark" : "btn-outline-dark")">Tất cả</a>
+        <a asp-action="Index" asp-route-status="Pending" asp-route-searchString="@searchString" class="btn btn-sm @(ViewBag.Filter == "Pending" ? "btn-dark" : "btn-outline-dark")">Chưa hoàn thành</a>
+        <a asp-action="Index" asp-route-status="Completed" asp-route-searchString="@searchString" class="btn btn-sm @(ViewBag.Filter == "Completed" ? "btn-dark" : "btn-outline-dark")">Đã hoàn thành</a>
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Sắp xếp
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewBag.DateSortParam">Theo ngày</a></li>
+            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewBag.PrioritySortParam">Theo độ ưu tiên</a></li>
+        </ul>
+    </div>
     <a asp-action="Create" class="btn btn-primary">
         <i class="bi bi-plus-circle-fill"></i> Tạo công việc mới
     </a>
@@ -19,9 +34,34 @@
             <div class="col">
                 <div class="card h-100">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0">@item.Title</h5>
-                            <span class="badge @(item.Status == "Completed" ? "bg-success" : "bg-warning text-dark")">@item.Status</span>
+                        <div class="d-flex align-items-center">
+                            <form asp-action="ToggleTaskStatus" method="post" class="me-2">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-light p-0">
+                                    @if (item.Status == "Completed")
+                                    {
+                                        <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle text-muted" style="font-size: 1.5rem;"></i>
+                                    }
+                                </button>
+                            </form>
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <h5 class="card-title mb-0">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="text-decoration-none">
+                                        @item.Title
+                                        @if (item.Project != null)
+                                        {
+                                            <small class="text-muted">(@item.Project.Name)</small>
+                                        }
+                                    </a>
+                                </h5>
+                                <span class="badge @(item.Priority == "High" ? "bg-danger" : item.Priority == "Medium" ? "bg-warning text-dark" : "bg-secondary")">
+                                    @item.Priority
+                                </span>
+                            </div>
                         </div>
                         <h6 class="card-subtitle text-muted mt-2">Ngày tạo: @item.CreatedAt.ToShortDateString()</h6>
                         @if (item.DueDate.HasValue)
@@ -29,6 +69,12 @@
                             <h6 class="card-subtitle text-muted">Ngày hết hạn: @item.DueDate.Value.ToShortDateString()</h6>
                         }
                         <p class="card-text mt-3">@item.Description</p>
+                        <div class="mt-2">
+                            @foreach (var tag in item.TaskTags.Select(tt => tt.Tag))
+                            {
+                                <span class="badge bg-info text-dark me-1">@tag.Name</span>
+                            }
+                        </div>
                     </div>
                     <div class="card-footer d-flex justify-content-end gap-2">
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>

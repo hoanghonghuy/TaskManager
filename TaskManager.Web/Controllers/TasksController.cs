@@ -4,10 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TaskManager.Data;
 using TaskManager.Web.ViewModels;
+using TaskManager.Data.Models;
+using BCrypt.Net;
+using System.Security.Claims;
+using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace TaskManager.Web.Controllers
 {
-    [Authorize] // Chỉ những người dùng đã đăng nhập mới có thể truy cập
+    [Authorize]
     public class TasksController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -17,136 +22,207 @@ namespace TaskManager.Web.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        #region View, Search & Sort
+        public async Task<IActionResult> Index(string? status, string? searchString, string? sortOrder, int? projectId)
         {
-            // Lấy User ID của người dùng hiện tại
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            IQueryable<TaskManager.Data.Models.Task> userTasksQuery = _context.Tasks
+                .Include(t => t.Project)
+                .Where(t => t.UserId == int.Parse(userId!));
 
-            // Truy vấn danh sách công việc của người dùng hiện tại
-            var userTasks = await _context.Tasks
-                .Where(t => t.UserId == int.Parse(userId))
-                .OrderByDescending(t => t.CreatedAt)
-                .ToListAsync();
+            if (projectId.HasValue)
+            {
+                userTasksQuery = userTasksQuery.Where(t => t.ProjectId == projectId.Value);
+                ViewBag.ProjectId = projectId.Value;
+            }
 
+            if (!string.IsNullOrEmpty(status))
+            {
+                userTasksQuery = userTasksQuery.Where(t => t.Status == status);
+                ViewBag.Filter = status;
+            }
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                userTasksQuery = userTasksQuery.Where(t => t.Title!.Contains(searchString) || (t.Description != null && t.Description.Contains(searchString)));
+                ViewBag.SearchString = searchString;
+            }
+
+            ViewBag.DateSortParam = string.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+            ViewBag.PrioritySortParam = sortOrder == "priority" ? "priority_desc" : "priority";
+
+            switch (sortOrder)
+            {
+                case "date_desc":
+                    userTasksQuery = userTasksQuery.OrderByDescending(t => t.CreatedAt);
+                    break;
+                case "priority":
+                    userTasksQuery = userTasksQuery.OrderBy(t => t.Priority);
+                    break;
+                case "priority_desc":
+                    userTasksQuery = userTasksQuery.OrderByDescending(t => t.Priority);
+                    break;
+                default:
+                    userTasksQuery = userTasksQuery.OrderBy(t => t.CreatedAt);
+                    break;
+            }
+
+            var userTasks = await userTasksQuery.ToListAsync();
             return View(userTasks);
         }
+
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Details(int? id)
         {
-            return View();
+            if (id == null) return NotFound();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskTags)!
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.Subtasks) // Dòng mới
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == int.Parse(userId!));
+
+            if (task == null) return NotFound();
+            return View(task);
+        }
+        #endregion
+
+        #region Create
+        [HttpGet]
+        public async Task<IActionResult> Create(int? parentTaskId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var projects = await _context.Projects.Where(p => p.UserId == int.Parse(userId!)).ToListAsync();
+            var viewModel = new CreateTaskViewModel { Projects = projects, ParentTaskId = parentTaskId }; // Dòng mới
+            return View(viewModel);
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateTaskViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // Lấy User ID của người dùng hiện tại
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (userId == null)
-                {
-                    // Xử lý lỗi nếu không tìm thấy User ID
-                    return RedirectToAction("Login", "Account");
-                }
+                if (userId == null) return RedirectToAction("Login", "Account");
 
-                var newTask = new TaskManager.Data.Models.Task 
+                var newTask = new TaskManager.Data.Models.Task
                 {
                     Title = model.Title,
                     Description = model.Description,
                     DueDate = model.DueDate,
-                    Status = "Pending", // Gán trạng thái mặc định
+                    Status = "Pending",
+                    Priority = model.Priority,
                     CreatedAt = DateTime.UtcNow,
-                    UserId = int.Parse(userId) // Chuyển đổi ID từ string sang int
+                    UserId = int.Parse(userId!),
+                    ProjectId = model.ProjectId,
+                    ParentTaskId = model.ParentTaskId // Dòng mới
                 };
+
+                var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
+                var existingTags = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
+                foreach (var tagName in tagNames.Except(existingTags.Select(t => t.Name)))
+                {
+                    existingTags.Add(new Tag { Name = tagName });
+                }
+                foreach (var tag in existingTags)
+                {
+                    newTask.TaskTags.Add(new TaskTag { Tag = tag });
+                }
 
                 _context.Tasks.Add(newTask);
                 await _context.SaveChangesAsync();
 
+                if (newTask.ParentTaskId.HasValue)
+                {
+                    return RedirectToAction("Details", new { id = newTask.ParentTaskId.Value });
+                }
+
                 return RedirectToAction("Index");
             }
-
-            // Nếu dữ liệu không hợp lệ, trả về View với lỗi
+            var userIdForProjects = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            model.Projects = await _context.Projects.Where(p => p.UserId == int.Parse(userIdForProjects!)).ToListAsync();
             return View(model);
         }
+        #endregion
+
+        #region Edit
         [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var task = await _context.Tasks.FindAsync(id);
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            // Kiểm tra xem công việc có thuộc về người dùng hiện tại không
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (task.UserId != int.Parse(userId))
-            {
-                return Forbid(); // Trả về lỗi 403 Forbidden
-            }
+            var task = await _context.Tasks.Include(t => t.TaskTags)!.ThenInclude(tt => tt.Tag).FirstOrDefaultAsync(t => t.Id == id);
+            if (task == null) return NotFound();
+            if (task.UserId != int.Parse(userId!)) return Forbid();
 
-            // Chuyển đổi từ Model thành ViewModel để hiển thị ra View
+            var projects = await _context.Projects.Where(p => p.UserId == int.Parse(userId!)).ToListAsync();
+
             var model = new EditTaskViewModel
             {
                 Id = task.Id,
                 Title = task.Title,
                 Description = task.Description,
-                DueDate = task.DueDate
+                DueDate = task.DueDate,
+                Priority = task.Priority,
+                ProjectId = task.ProjectId,
+                Projects = projects,
+                TagNames = string.Join(", ", task.TaskTags.Select(tt => tt.Tag.Name))
             };
-
             return View(model);
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditTaskViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // Kiểm tra xem công việc có thuộc về người dùng hiện tại không
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var taskToUpdate = await _context.Tasks.FindAsync(model.Id);
+                var taskToUpdate = await _context.Tasks.Include(t => t.TaskTags)!.FirstOrDefaultAsync(t => t.Id == model.Id);
 
-                if (taskToUpdate == null || taskToUpdate.UserId != int.Parse(userId))
-                {
-                    return NotFound();
-                }
+                if (taskToUpdate == null || taskToUpdate.UserId != int.Parse(userId!)) return NotFound();
 
                 taskToUpdate.Title = model.Title;
                 taskToUpdate.Description = model.Description;
                 taskToUpdate.DueDate = model.DueDate;
+                taskToUpdate.Priority = model.Priority;
+                taskToUpdate.ProjectId = model.ProjectId;
+
+                var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
+                var existingTags = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
+                foreach (var tagName in tagNames.Except(existingTags.Select(t => t.Name)))
+                {
+                    existingTags.Add(new Tag { Name = tagName });
+                }
+
+                taskToUpdate.TaskTags.Clear();
+                foreach (var tag in existingTags)
+                {
+                    taskToUpdate.TaskTags.Add(new TaskTag { Tag = tag });
+                }
 
                 await _context.SaveChangesAsync();
-
                 return RedirectToAction("Index");
             }
-
+            var userIdForProjects = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            model.Projects = await _context.Projects.Where(p => p.UserId == int.Parse(userIdForProjects!)).ToListAsync();
             return View(model);
         }
+        #endregion
+
+        #region Delete & Update Status
         [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var task = await _context.Tasks.FindAsync(id);
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            // Kiểm tra phân quyền: Đảm bảo công việc thuộc về người dùng hiện tại
+            if (id == null) return NotFound();
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (task.UserId != int.Parse(userId))
-            {
-                return Forbid();
-            }
-
+            var task = await _context.Tasks.FirstOrDefaultAsync(m => m.Id == id && m.UserId == int.Parse(userId!));
+            if (task == null) return NotFound();
             return View(task);
         }
 
@@ -156,17 +232,26 @@ namespace TaskManager.Web.Controllers
         {
             var task = await _context.Tasks.FindAsync(id);
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // Kiểm tra phân quyền một lần nữa trước khi xóa
-            if (task == null || task.UserId != int.Parse(userId))
-            {
-                return NotFound(); // Hoặc Forbid() tùy vào cách xử lý lỗi
-            }
-
+            if (task == null || task.UserId != int.Parse(userId!)) return NotFound();
             _context.Tasks.Remove(task);
             await _context.SaveChangesAsync();
-
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleTaskStatus(int? id)
+        {
+            if (id == null) return NotFound();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var task = await _context.Tasks.FindAsync(id);
+            if (task == null || task.UserId != int.Parse(userId!)) return NotFound();
+            task.Status = task.Status == "Completed" ? "Pending" : "Completed";
+            _context.Update(task);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        #endregion
     }
 }

@@ -1,0 +1,29 @@
+﻿@model TaskManager.Data.Models.Project
+
+@{
+    ViewData["Title"] = "Tạo danh sách";
+}
+
+<div class="card p-4 mx-auto" style="max-width: 400px; margin-top: 50px;">
+    <h1 class="card-title text-center">Tạo danh sách mới</h1>
+    <hr />
+    <div class="card-body">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Lưu</button>
+                <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

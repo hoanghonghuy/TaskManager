@@ -1,5 +1,6 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+using TaskManager.Data.Models;
 
 namespace TaskManager.Web.ViewModels
 {
@@ -8,7 +9,7 @@ namespace TaskManager.Web.ViewModels
         [Required(ErrorMessage = "Tiêu đề công việc không được để trống.")]
         [StringLength(200, ErrorMessage = "Tiêu đề không được quá 200 ký tự.")]
         [Display(Name = "Tiêu đề")]
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
 
         [Display(Name = "Mô tả")]
         public string? Description { get; set; }
@@ -16,5 +17,17 @@ namespace TaskManager.Web.ViewModels
         [Display(Name = "Ngày hết hạn")]
         [DataType(DataType.Date)]
         public DateTime? DueDate { get; set; }
+
+        [Required]
+        [Display(Name = "Mức độ ưu tiên")]
+        public string Priority { get; set; } = "None";
+
+        public string TagNames { get; set; } = string.Empty;
+
+        public int? ProjectId { get; set; }
+        public List<Project>? Projects { get; set; }
+
+        // Thuộc tính mới
+        public int? ParentTaskId { get; set; }
     }
 }

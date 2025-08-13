@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+.vscode/
+
+# Binaries
+bin/
+obj/
+
+# NuGet
+*.nupkg
+.nuget/
+*.csproj.user
+packages/
+
+# Docker
+Dockerfile
+.dockerignore

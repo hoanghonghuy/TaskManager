@@ -1,0 +1,26 @@
+﻿@model TaskManager.Web.ViewModels.UserViewModel
+
+@{
+    ViewData["Title"] = "Xóa người dùng";
+}
+
+<div class="card p-4 mx-auto" style="max-width: 400px; margin-top: 50px;">
+    <h1 class="text-center card-title">Xóa người dùng</h1>
+    <h3 class="text-center card-subtitle mb-2 text-danger">Bạn có chắc chắn muốn xóa người dùng này?</h3>
+    <hr />
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-4">Email:</dt>
+            <dd class="col-sm-8">@Model.Email</dd>
+            <dt class="col-sm-4">Họ và tên:</dt>
+            <dd class="col-sm-8">@Model.FullName</dd>
+        </dl>
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="Id" />
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-danger">Xóa</button>
+                <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>

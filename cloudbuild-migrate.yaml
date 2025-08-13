@@ -1,0 +1,37 @@
+steps:
+# Bước 1: Chạy proxy trong một container riêng, đã được cài đặt sẵn
+# Nó sẽ chạy ngầm và tạo ra một network để các step khác kết nối vào
+- name: 'gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.10.0'
+  args: ['--private-ip', 'taskmanager-free-project:us-central1:taskmanager-db-free']
+  id: 'proxy'
+
+# Bước 2: Chạy migration. Step này sẽ tự động đợi cho Step 'proxy' sẵn sàng
+- name: 'mcr.microsoft.com/dotnet/sdk:8.0'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    # 1. Cài đặt công cụ EF
+    dotnet tool install --global dotnet-ef
+
+    # 2. Thêm đường dẫn vào PATH và chạy lệnh migration
+    export PATH="$$PATH:/builder/home/.dotnet/tools"
+    dotnet ef database update --project TaskManager.Data
+  
+  # Sử dụng secret như cũ
+  secretEnv: ['ConnectionStrings__DefaultConnection']
+  # Đảm bảo step này chạy sau khi proxy đã khởi động
+  waitFor: ['proxy']
+
+# Phần này không thay đổi
+availableSecrets:
+  secretManager:
+  - versionName: projects/taskmanager-free-project/secrets/pg-connection-string/versions/latest
+    env: 'ConnectionStrings__DefaultConnection'
+
+# Phần này không thay đổi
+serviceAccount: 'projects/taskmanager-free-project/serviceAccounts/taskmanager-runner@taskmanager-free-project.iam.gserviceaccount.com'
+
+# Phần này không thay đổi
+options:
+  logging: CLOUD_LOGGING_ONLY
