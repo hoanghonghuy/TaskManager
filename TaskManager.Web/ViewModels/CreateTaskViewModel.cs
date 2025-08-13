@@ -30,7 +30,6 @@ namespace TaskManager.Web.ViewModels
         public int? ProjectId { get; set; }
         public List<Project>? Projects { get; set; }
 
-        // Thuộc tính mới cho Công việc lặp lại
         [Display(Name = "Lặp lại")]
         public string? RecurrenceRule { get; set; }
 
@@ -38,7 +37,11 @@ namespace TaskManager.Web.ViewModels
         [DataType(DataType.Date)]
         public DateTime? RecurrenceEndDate { get; set; }
 
-        // Thuộc tính cho công việc con
+        // Thuộc tính mới cho Nhắc nhở
+        [Display(Name = "Thời gian nhắc nhở")]
+        [DataType(DataType.DateTime)]
+        public DateTime? ReminderTime { get; set; }
+
         public int? ParentTaskId { get; set; }
     }
 }

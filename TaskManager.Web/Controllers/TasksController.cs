@@ -110,7 +110,6 @@ namespace TaskManager.Web.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (userId == null) return RedirectToAction("Login", "Account");
 
-                // Tạo công việc chính
                 var newTask = new TaskManager.Data.Models.Task
                 {
                     Title = model.Title,
@@ -122,10 +121,11 @@ namespace TaskManager.Web.Controllers
                     UserId = int.Parse(userId!),
                     ProjectId = model.ProjectId,
                     ParentTaskId = model.ParentTaskId,
-                    RecurrenceRule = model.RecurrenceRule, // Dòng mới
-                    RecurrenceEndDate = model.RecurrenceEndDate // Dòng mới
+                    RecurrenceRule = model.RecurrenceRule,
+                    RecurrenceEndDate = model.RecurrenceEndDate
                 };
 
+                // Xử lý thẻ
                 var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
                 var existingTags = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
                 foreach (var tagName in tagNames.Except(existingTags.Select(t => t.Name)))
@@ -161,7 +161,6 @@ namespace TaskManager.Web.Controllers
                                 RecurrenceEndDate = model.RecurrenceEndDate
                             };
 
-                            // Gắn lại các tags
                             foreach (var tag in existingTags)
                             {
                                 recurringTask.TaskTags.Add(new TaskTag { Tag = tag });
@@ -169,7 +168,6 @@ namespace TaskManager.Web.Controllers
                             _context.Tasks.Add(recurringTask);
                         }
 
-                        // Tăng ngày dựa trên quy tắc lặp lại
                         switch (model.RecurrenceRule)
                         {
                             case "Daily":
@@ -226,8 +224,8 @@ namespace TaskManager.Web.Controllers
                 ProjectId = task.ProjectId,
                 Projects = projects,
                 TagNames = string.Join(", ", task.TaskTags.Select(tt => tt.Tag.Name)),
-                RecurrenceRule = task.RecurrenceRule, // Dòng mới
-                RecurrenceEndDate = task.RecurrenceEndDate // Dòng mới
+                RecurrenceRule = task.RecurrenceRule,
+                RecurrenceEndDate = task.RecurrenceEndDate
             };
             return View(model);
         }
@@ -248,8 +246,8 @@ namespace TaskManager.Web.Controllers
                 taskToUpdate.DueDate = model.DueDate;
                 taskToUpdate.Priority = model.Priority;
                 taskToUpdate.ProjectId = model.ProjectId;
-                taskToUpdate.RecurrenceRule = model.RecurrenceRule; // Dòng mới
-                taskToUpdate.RecurrenceEndDate = model.RecurrenceEndDate; // Dòng mới
+                taskToUpdate.RecurrenceRule = model.RecurrenceRule;
+                taskToUpdate.RecurrenceEndDate = model.RecurrenceEndDate;
 
                 var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
                 var existingTags = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();

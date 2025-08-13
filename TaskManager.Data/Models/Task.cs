@@ -27,9 +27,12 @@ namespace TaskManager.Data.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Thuộc tính cho chức năng Công việc lặp lại
         public string? RecurrenceRule { get; set; }
         public DateTime? RecurrenceEndDate { get; set; }
+
+        // Thuộc tính mới cho chức năng Nhắc nhở
+        public DateTime? ReminderTime { get; set; }
+        public bool IsReminded { get; set; } = false;
 
         [ForeignKey("User")]
         public int UserId { get; set; }
@@ -38,7 +41,6 @@ namespace TaskManager.Data.Models
         public int? ProjectId { get; set; }
         public Project? Project { get; set; }
 
-        // Thuộc tính cho chức năng Công việc con (Subtasks)
         public int? ParentTaskId { get; set; }
         public Task? ParentTask { get; set; }
         public ICollection<Task> Subtasks { get; set; } = new List<Task>();
