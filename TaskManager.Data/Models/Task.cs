@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TaskManager.Data.Models
 {
@@ -25,6 +26,10 @@ namespace TaskManager.Data.Models
         public string Priority { get; set; } = "None";
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Thuộc tính cho chức năng Công việc lặp lại
+        public string? RecurrenceRule { get; set; }
+        public DateTime? RecurrenceEndDate { get; set; }
 
         [ForeignKey("User")]
         public int UserId { get; set; }

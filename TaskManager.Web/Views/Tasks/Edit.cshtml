@@ -23,7 +23,7 @@
             </div>
             <div class="form-group mb-3">
                 <label asp-for="DueDate" class="form-label"></label>
-                <input asp-for="DueDate" class="form-control" />
+                <input asp-for="DueDate" class="form-control" type="date" />
                 <span asp-validation-for="DueDate" class="text-danger"></span>
             </div>
             <div class="form-group mb-3">
@@ -47,6 +47,23 @@
                 <label asp-for="TagNames" class="form-label"></label>
                 <input asp-for="TagNames" class="form-control" placeholder="Nhập thẻ, cách nhau bằng dấu phẩy" />
                 <span asp-validation-for="TagNames" class="text-danger"></span>
+            </div>
+            <div class="card p-3 mb-3">
+                <h6 class="card-title">Thiết lập lặp lại</h6>
+                <div class="form-group mb-3">
+                    <label asp-for="RecurrenceRule" class="form-label"></label>
+                    <select asp-for="RecurrenceRule" class="form-control">
+                        <option value="">Không lặp lại</option>
+                        <option value="Daily">Hàng ngày</option>
+                        <option value="Weekly">Hàng tuần</option>
+                        <option value="Monthly">Hàng tháng</option>
+                        <option value="Yearly">Hàng năm</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RecurrenceEndDate" class="form-label"></label>
+                    <input asp-for="RecurrenceEndDate" class="form-control" type="date" />
+                </div>
             </div>
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">Lưu thay đổi</button>

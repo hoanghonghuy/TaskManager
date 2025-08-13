@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using TaskManager.Data.Models;
 
 namespace TaskManager.Web.ViewModels
@@ -22,12 +23,22 @@ namespace TaskManager.Web.ViewModels
         [Display(Name = "Mức độ ưu tiên")]
         public string Priority { get; set; } = "None";
 
+        [Display(Name = "Thẻ")]
         public string TagNames { get; set; } = string.Empty;
 
+        [Display(Name = "Danh sách")]
         public int? ProjectId { get; set; }
         public List<Project>? Projects { get; set; }
 
-        // Thuộc tính mới
+        // Thuộc tính mới cho Công việc lặp lại
+        [Display(Name = "Lặp lại")]
+        public string? RecurrenceRule { get; set; }
+
+        [Display(Name = "Kết thúc lặp lại")]
+        [DataType(DataType.Date)]
+        public DateTime? RecurrenceEndDate { get; set; }
+
+        // Thuộc tính cho công việc con
         public int? ParentTaskId { get; set; }
     }
 }

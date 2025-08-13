@@ -10,19 +10,23 @@
     <div class="card-body">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @if (Model.ParentTaskId.HasValue)
+            {
+                <input type="hidden" asp-for="ParentTaskId" />
+            }
             <div class="form-group mb-3">
                 <label asp-for="Title" class="form-label"></label>
-                <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề công việc" />
+                <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
             <div class="form-group mb-3">
                 <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Mô tả chi tiết công việc"></textarea>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="form-group mb-3">
                 <label asp-for="DueDate" class="form-label"></label>
-                <input asp-for="DueDate" class="form-control" />
+                <input asp-for="DueDate" class="form-control" type="date" />
                 <span asp-validation-for="DueDate" class="text-danger"></span>
             </div>
             <div class="form-group mb-3">
@@ -42,8 +46,30 @@
                 </select>
                 <span asp-validation-for="ProjectId" class="text-danger"></span>
             </div>
+            <div class="form-group mb-3">
+                <label asp-for="TagNames" class="form-label"></label>
+                <input asp-for="TagNames" class="form-control" placeholder="Nhập thẻ, cách nhau bằng dấu phẩy" />
+                <span asp-validation-for="TagNames" class="text-danger"></span>
+            </div>
+            <div class="card p-3 mb-3">
+                <h6 class="card-title">Thiết lập lặp lại</h6>
+                <div class="form-group mb-3">
+                    <label asp-for="RecurrenceRule" class="form-label"></label>
+                    <select asp-for="RecurrenceRule" class="form-control">
+                        <option value="">Không lặp lại</option>
+                        <option value="Daily">Hàng ngày</option>
+                        <option value="Weekly">Hàng tuần</option>
+                        <option value="Monthly">Hàng tháng</option>
+                        <option value="Yearly">Hàng năm</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RecurrenceEndDate" class="form-label"></label>
+                    <input asp-for="RecurrenceEndDate" class="form-control" type="date" />
+                </div>
+            </div>
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">Lưu công việc</button>
+                <button type="submit" class="btn btn-primary">Tạo công việc</button>
                 <a asp-action="Index" class="btn btn-secondary">Hủy</a>
             </div>
         </form>
