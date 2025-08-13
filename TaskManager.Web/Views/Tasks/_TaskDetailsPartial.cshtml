@@ -1,0 +1,62 @@
+﻿@model TaskManager.Data.Models.Task
+
+@if (Model != null)
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">
+            @Model.Title
+            @if (Model.Project != null)
+            {
+                <small class="text-muted">(@Model.Project.Name)</small>
+            }
+        </h3>
+        <span class="badge @(Model.Priority == "High" ? "bg-danger" : Model.Priority == "Medium" ? "bg-warning text-dark" : "bg-secondary")">
+            @Model.Priority
+        </span>
+    </div>
+
+    <div class="mb-3">
+        <i class="bi bi-clock me-2"></i>
+        <strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+    </div>
+    @if (Model.DueDate.HasValue)
+    {
+        <div class="mb-3">
+            <i class="bi bi-calendar-check me-2"></i>
+            <strong>Ngày hết hạn:</strong> @Model.DueDate.Value.ToString("dd/MM/yyyy")
+        </div>
+    }
+
+    <div class="mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>Mô tả:</strong>
+        <p class="mt-2">@Model.Description</p>
+    </div>
+
+    @if (Model.TaskTags.Any())
+    {
+        <div class="mb-4">
+            <i class="bi bi-tags me-2"></i>
+            <strong>Tags:</strong>
+            <div class="mt-2">
+                @foreach (var tag in Model.TaskTags.Select(tt => tt.Tag))
+                {
+                    <span class="badge bg-info text-dark me-1">@tag.Name</span>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="mt-auto d-flex justify-content-end gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa công việc">
+            <i class="bi bi-pencil-fill"></i> Sửa
+        </a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa công việc">
+            <i class="bi bi-trash-fill"></i> Xóa
+        </a>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">Không tìm thấy công việc.</div>
+}

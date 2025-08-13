@@ -71,24 +71,6 @@ namespace TaskManager.Web.Controllers
             var userTasks = await userTasksQuery.ToListAsync();
             return View(userTasks);
         }
-
-        [HttpGet]
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-
-            var task = await _context.Tasks
-                .Include(t => t.Project)
-                .Include(t => t.TaskTags)!
-                    .ThenInclude(tt => tt.Tag)
-                .Include(t => t.Subtasks)
-                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == int.Parse(userId!));
-
-            if (task == null) return NotFound();
-            return View(task);
-        }
         #endregion
 
         #region Create
@@ -309,5 +291,41 @@ namespace TaskManager.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
         #endregion
+        #region Actions for Task Details
+        // GET: Tasks/Details/5
+        public async Task<IActionResult> Details(int? id, bool isPartial = false)
+        {
+            if (id == null)
+            {
+                if (isPartial)
+                {
+                    return PartialView("_TaskDetailsPartial", null);
+                }
+                return NotFound();
+            }
+
+            var task = await _context.Tasks
+                .Include(t => t.Project)
+                .Include(t => t.TaskTags)
+                .ThenInclude(tt => tt.Tag)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (task == null)
+            {
+                if (isPartial)
+                {
+                    return PartialView("_TaskDetailsPartial", null);
+                }
+                return NotFound();
+            }
+
+            if (isPartial)
+            {
+                return PartialView("_TaskDetailsPartial", task);
+            }
+            return View(task);
+        }
+        #endregion
     }
+
 }
