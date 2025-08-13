@@ -416,3 +416,12 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+
+###
+
+cloudbuild-migrate.yaml
+.dockerignore
+Dockerfile
+pg-connection.txt
