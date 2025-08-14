@@ -19,6 +19,6 @@ namespace TaskManager.Web.ViewModels
         public string? FullName { get; set; }
 
         [Display(Name = "Ngày tham gia")]
-        public DateTime CreatedAt { get; set; }
+        public string? CreatedAtString { get; set; }
     }
 }

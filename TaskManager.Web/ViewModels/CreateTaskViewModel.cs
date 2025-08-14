@@ -37,10 +37,9 @@ namespace TaskManager.Web.ViewModels
         [DataType(DataType.Date)]
         public DateTime? RecurrenceEndDate { get; set; }
 
-        // Thuộc tính mới cho Nhắc nhở
+        
         [Display(Name = "Thời gian nhắc nhở")]
-        [DataType(DataType.DateTime)]
-        public DateTime? ReminderTime { get; set; }
+        public string? ReminderTimeString { get; set; }
 
         public int? ParentTaskId { get; set; }
     }

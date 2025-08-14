@@ -1,72 +1,286 @@
-﻿/* Custom Dark Mode Styles */
+﻿/* =================================================================
+   BASE & SHARED STYLES
+================================================================= */
 body {
-    background-color: #1a1a1a;
-    color: #e9ecef; /* Màu sáng hơn cho dễ đọc */
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-y: hidden;
 }
 
-.sidebar {
-    background-color: #242424;
-    color: #e9ecef;
-    border-right: 1px solid #3d3d3d;
+.main-content {
+    overflow-y: auto;
+    height: 100vh;
+    padding: 1.5rem;
 }
 
-.navbar {
-    background-color: #242424 !important;
-    border-bottom: 1px solid #3d3d3d !important;
+.task-details-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 100vh;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    padding: 1.5rem;
+    z-index: 1050;
+    overflow-y: auto;
+    box-shadow: -10px 0px 25px rgba(0,0,0,0.1);
 }
 
-    .navbar .nav-link {
-        color: #e9ecef !important;
+    .task-details-panel.show {
+        transform: translateX(0);
     }
 
-.form-control,
-.form-select {
-    background-color: #2d2d2d;
-    color: #e9ecef;
-    border-color: #555555;
+.main-content.shift {
+    margin-right: 400px;
 }
 
-    .form-control::placeholder {
-        color: #999999;
+/* =================================================================
+   DARK THEME
+================================================================= */
+body.theme-dark {
+    background-color: #111827;
+    color: #f9fafb;
+}
+    /* --- Components --- */
+    body.theme-dark .sidebar {
+        background-color: #111827;
+        border-right: 1px solid #374151;
     }
 
-    .form-control:focus,
-    .form-select:focus {
-        background-color: #2d2d2d;
-        color: #e9ecef;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        body.theme-dark .sidebar .nav-link {
+            color: #9ca3af;
+            border-radius: 6px;
+        }
+
+            body.theme-dark .sidebar .nav-link:hover, body.theme-dark .sidebar .nav-link.active {
+                color: #ffffff;
+                background-color: #374151;
+            }
+
+    body.theme-dark .header-navbar {
+        background-color: #1f2937;
+        border-bottom: 1px solid #374151;
     }
 
-.card {
-    background-color: #2d2d2d;
-    color: #e9ecef;
-    border-color: #555555;
-}
-
-.card-title,
-.card-subtitle {
-    color: #e9ecef !important;
-}
-
-.card-footer {
-    background-color: #2d2d2d;
-    border-top: 1px solid #555555;
-}
-
-.dropdown-menu {
-    background-color: #2d2d2d;
-    border-color: #555555;
-}
-
-.dropdown-item {
-    color: #e9ecef;
-}
-
-    .dropdown-item:hover {
-        background-color: #444444;
+    body.theme-dark .form-control, body.theme-dark .form-select {
+        background-color: #374151;
+        color: #f9fafb;
+        border: 1px solid #4b5563;
+        border-radius: 6px;
     }
 
-.btn-link {
-    color: #e9ecef !important;
+        body.theme-dark .form-control::placeholder {
+            color: #9ca3af;
+        }
+
+        body.theme-dark .form-control:focus, body.theme-dark .form-select:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+        }
+
+        body.theme-dark .form-control:read-only {
+            opacity: 0.6;
+        }
+
+    body.theme-dark .card {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 8px;
+    }
+
+    body.theme-dark hr {
+        border-top-color: #374151;
+    }
+
+    body.theme-dark .dropdown-menu {
+        background-color: #374151;
+        border-color: #4b5563;
+        border-radius: 8px;
+    }
+
+    body.theme-dark .dropdown-item {
+        color: #f9fafb;
+    }
+
+        body.theme-dark .dropdown-item:hover {
+            background-color: #4b5563;
+        }
+
+    body.theme-dark a {
+        color: #60a5fa;
+        text-decoration: none;
+    }
+
+        body.theme-dark a:hover {
+            color: #93c5fd;
+        }
+
+    body.theme-dark .table {
+        color: #f9fafb;
+    }
+
+        body.theme-dark .table thead th {
+            color: #f9fafb;
+            border-bottom: 2px solid #4b5563;
+        }
+
+        body.theme-dark .table tbody td {
+            border-color: #374151;
+        }
+
+    body.theme-dark .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    body.theme-dark .task-details-panel {
+        background-color: #1f2937;
+        border-left: 1px solid #374151;
+    }
+
+    body.theme-dark .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+/* --- Task List Styles (Đã cập nhật) --- */
+.task-list {
+    border-radius: 8px;
+    overflow: hidden;
 }
+
+.task-item-new {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 8px;
+}
+
+body.theme-dark .task-item-new {
+    background-color: #1f2937;
+}
+
+.task-item-new .form-control-plaintext {
+    color: #9ca3af;
+    width: 100%;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    transition: background-color 0.2s ease;
+    position: relative;
+    gap: 15px;
+}
+
+body.theme-dark .task-item {
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+}
+
+    body.theme-dark .task-item:hover {
+        background-color: #374151;
+    }
+
+body.theme-dark .task-list .task-item:last-child {
+    border-bottom: none;
+}
+
+.btn-check-task {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex;
+}
+
+body.theme-dark .btn-check-task {
+    color: #6b7280;
+}
+
+    body.theme-dark .btn-check-task:hover .bi-circle {
+        color: #60a5fa;
+    }
+
+    body.theme-dark .btn-check-task .bi-check-circle-fill {
+        color: #22c55e;
+    }
+
+/* SỬA LỖI CLICK: Định nghĩa khu vực click riêng */
+.task-content-link {
+    flex-grow: 1;
+    text-decoration: none;
+    color: inherit;
+}
+
+.task-content {
+}
+
+.task-title {
+    font-weight: 500;
+}
+
+body.theme-dark .task-title {
+    color: #f9fafb;
+}
+
+.task-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+body.theme-dark .task-meta {
+    color: #9ca3af;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.meta-overdue {
+    font-weight: 500;
+}
+
+body.theme-dark .meta-overdue {
+    color: #f87171 !important;
+}
+
+.task-priority {
+    font-size: 1rem;
+}
+
+body.theme-dark .priority-high {
+    color: #f87171;
+}
+
+body.theme-dark .priority-medium {
+    color: #fbbf24;
+}
+
+body.theme-dark .priority-low {
+    color: #60a5fa;
+}
+
+.task-item.task-completed {
+    opacity: 0.6;
+}
+
+    .task-item.task-completed .task-title, .task-item.task-completed .task-meta {
+        text-decoration: line-through;
+    }
+
+
+/* =================================================================
+   LIGHT THEME
+================================================================= */
+body.theme-light {
+    background-color: #f8f9fa;
+    color: #212529;
+}
+/* ... (các style Light Theme khác) ... */

@@ -1,95 +1,132 @@
 ﻿@model IEnumerable<TaskManager.Data.Models.Task>
 
 @{
-    ViewData["Title"] = "Danh sách công việc";
-    string? searchString = ViewBag.SearchString;
+    ViewData["Title"] = "Công việc";
+    string? currentStatus = ViewBag.Filter;
+    string? currentSearch = ViewBag.SearchString;
+    int? currentProjectId = ViewBag.ProjectId;
+
+    // Nhóm các công việc theo ngày hết hạn để hiển thị tiêu đề (Hôm nay, Ngày mai, v.v.)
+    var tasksGroupedByDate = Model
+        .GroupBy(t => t.DueDate?.Date)
+        .OrderBy(g => g.Key ?? DateTime.MaxValue);
 }
 
-<h1 class="text-center">Danh sách công việc</h1>
-<div class="d-flex justify-content-between mb-3">
-    <div>
-        <a asp-action="Index" asp-route-searchString="@searchString" asp-route-status="" class="btn btn-sm @(ViewBag.Filter == null ? "btn-dark" : "btn-outline-dark")">Tất cả</a>
-        <a asp-action="Index" asp-route-status="Pending" asp-route-searchString="@searchString" class="btn btn-sm @(ViewBag.Filter == "Pending" ? "btn-dark" : "btn-outline-dark")">Chưa hoàn thành</a>
-        <a asp-action="Index" asp-route-status="Completed" asp-route-searchString="@searchString" class="btn btn-sm @(ViewBag.Filter == "Completed" ? "btn-dark" : "btn-outline-dark")">Đã hoàn thành</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Công việc</h1>
+    <div class="d-flex align-items-center gap-2">
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-sort-down me-1"></i> Sắp xếp
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewBag.DateSortParam" asp-route-status="@currentStatus" asp-route-searchString="@currentSearch" asp-route-projectId="@currentProjectId">Theo ngày</a></li>
+                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewBag.PrioritySortParam" asp-route-status="@currentStatus" asp-route-searchString="@currentSearch" asp-route-projectId="@currentProjectId">Theo độ ưu tiên</a></li>
+            </ul>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Thêm công việc
+        </a>
     </div>
-    <div class="dropdown">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-funnel"></i> Sắp xếp
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewBag.DateSortParam">Theo ngày</a></li>
-            <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewBag.PrioritySortParam">Theo độ ưu tiên</a></li>
-        </ul>
-    </div>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-circle-fill"></i> Tạo công việc mới
-    </a>
 </div>
+
+<!-- Form Thêm nhanh -->
+<div class="task-item-new mb-4">
+    <i class="bi bi-plus-lg me-2"></i>
+    <input type="text" id="quick-add-task-title" class="form-control-plaintext" placeholder="Thêm một công việc và nhấn Enter...">
+</div>
+
 
 @if (Model.Any())
 {
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        @foreach (var item in Model)
-        {
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <form asp-action="ToggleTaskStatus" method="post" class="me-2">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn btn-sm btn-light p-0" data-bs-toggle="tooltip" data-bs-placement="top" title="@(item.Status == "Completed" ? "Bỏ hoàn thành" : "Hoàn thành")">
-                                    @if (item.Status == "Completed")
-                                    {
-                                        <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
-                                    }
-                                    else
-                                    {
-                                        <i class="bi bi-circle text-muted" style="font-size: 1.5rem;"></i>
-                                    }
-                                </button>
-                            </form>
-                            <div class="d-flex justify-content-between align-items-center w-100">
-                                <h5 class="card-title mb-0">
-                                    <a href="#" class="text-decoration-none view-task-details" data-task-id="@item.Id">
-                                        @item.Title
-                                        @if (item.Project != null)
-                                        {
-                                            <small class="text-muted">(@item.Project.Name)</small>
-                                        }
-                                    </a>
-                                </h5>
-                                <span class="badge @(item.Priority == "High" ? "bg-danger" : item.Priority == "Medium" ? "bg-warning text-dark" : "bg-secondary")">
-                                    @item.Priority
-                                </span>
+    foreach (var group in tasksGroupedByDate)
+    {
+        <h5 class="text-muted mt-4 mb-2">
+            @if (group.Key.HasValue)
+            {
+                if (group.Key.Value == DateTime.Today)
+                {
+                    <text>Hôm nay</text>
+                }
+                else if (group.Key.Value == DateTime.Today.AddDays(1))
+                {
+
+                    <text>Ngày mai</text>
+                }
+                else
+                {
+
+                    @group.Key.Value.ToString("dd/MM/yyyy")
+                }
+            }
+            else
+            {
+                <text>Chưa có ngày hết hạn</text>
+            }
+        </h5>
+
+        <div class="task-list">
+            @foreach (var item in group)
+            {
+                <div class="task-item @(item.Status == "Completed" ? "task-completed" : "")" id="task-row-@item.Id">
+                    <!-- Checkbox -->
+                    <div class="task-checkbox">
+                        <form asp-action="ToggleTaskStatus" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn-check-task" title="@(item.Status == "Completed" ? "Bỏ hoàn thành" : "Hoàn thành")">
+                                @if (item.Status == "Completed")
+                                {
+                                    <i class="bi bi-check-circle-fill"></i>
+                                }
+                                else
+                                {
+
+                                    <i class="bi bi-circle"></i>
+                                }
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Nội dung chính (Khu vực click để xem chi tiết) -->
+                    <a href="#" class="task-content-link view-task-details" data-task-id="@item.Id">
+                        <div class="task-content">
+                            <div class="task-title @(item.Status == "Completed" ? "text-decoration-line-through" : "")">
+                                @item.Title
+                            </div>
+                            <div class="task-meta">
+                                @if (item.Project != null)
+                                {
+                                    <span class="meta-item"><i class="bi bi-folder"></i> @item.Project.Name</span>
+                                }
+                                @if (item.TaskTags != null && item.TaskTags.Any())
+                                {
+                                    <span class="meta-item"><i class="bi bi-tags"></i> @string.Join(", ", item.TaskTags.Select(tt => tt.Tag.Name))</span>
+                                }
+                                @if (!string.IsNullOrEmpty(item.RecurrenceRule))
+                                {
+                                    <span class="meta-item"><i class="bi bi-arrow-repeat" title="Lặp lại"></i></span>
+                                }
                             </div>
                         </div>
-                        <h6 class="card-subtitle text-muted mt-2">Ngày tạo: @item.CreatedAt.ToShortDateString()</h6>
-                        @if (item.DueDate.HasValue)
-                        {
-                            <h6 class="card-subtitle text-muted">Ngày hết hạn: @item.DueDate.Value.ToShortDateString()</h6>
-                        }
-                        <p class="card-text mt-3">@item.Description</p>
-                        <div class="mt-2">
-                            @foreach (var tag in item.TaskTags.Select(tt => tt.Tag))
-                            {
-                                <span class="badge bg-info text-dark me-1">@tag.Name</span>
-                            }
+                    </a>
+
+                    <!-- Độ ưu tiên -->
+                    @if (item.Priority != "None")
+                    {
+                        <div class="task-priority">
+                            <i class="bi bi-flag-fill priority-@item.Priority.ToLower()" title="Ưu tiên: @item.Priority"></i>
                         </div>
-                    </div>
-                    <div class="card-footer d-flex justify-content-end gap-2">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa công việc">
-                            <i class="bi bi-pencil-fill"></i>
-                        </a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa công việc">
-                            <i class="bi bi-trash-fill"></i>
-                        </a>
-                    </div>
+                    }
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 }
 else
 {
-    <div class="alert alert-info text-center mt-4">Chưa có công việc nào được tạo.</div>
+    <div class="text-center p-5">
+        <i class="bi bi-check2-circle" style="font-size: 4rem; color: #4b5563;"></i>
+        <h4 class="mt-3">Tuyệt vời!</h4>
+        <p class="text-muted">Bạn đã hoàn thành tất cả công việc.</p>
+    </div>
 }

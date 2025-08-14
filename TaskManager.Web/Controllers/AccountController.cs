@@ -93,6 +93,12 @@ namespace TaskManager.Web.Controllers
                     // Kiểm tra mật khẩu
                     if (BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
                     {
+                        // Lấy vai trò của người dùng từ database
+                        var userRoles = await _context.UserRoles
+                            .Where(ur => ur.UserId == user.Id)
+                            .Select(ur => ur.Role.Name) // Chỉ lấy tên của vai trò
+                            .ToListAsync();
+
                         // Tạo các Claims (thông tin xác thực)
                         var claims = new List<Claim>
                         {
@@ -100,7 +106,11 @@ namespace TaskManager.Web.Controllers
                             new Claim(ClaimTypes.Name, user.Username),
                             new Claim(ClaimTypes.Email, user.Email)
                         };
-
+                        // Thêm các role claim
+                        foreach (var roleName in userRoles)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, roleName));
+                        }
                         var claimsIdentity = new ClaimsIdentity(
                             claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -206,7 +216,8 @@ namespace TaskManager.Web.Controllers
                 Username = user.Username,
                 Email = user.Email,
                 FullName = user.FullName,
-                CreatedAt = user.CreatedAt
+                // Chuyển thành chuỗi đã được định dạng ngay tại đây
+                CreatedAtString = user.CreatedAt.ToString("dd/MM/yyyy HH:mm")
             };
 
             return View(viewModel);

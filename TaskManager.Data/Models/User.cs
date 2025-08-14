@@ -25,5 +25,6 @@ namespace TaskManager.Data.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Task> Tasks { get; set; } = new List<Task>();
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }

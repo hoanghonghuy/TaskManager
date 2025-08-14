@@ -12,8 +12,8 @@ using TaskManager.Data;
 namespace TaskManager.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250813051352_AddRecurrenceFields")]
-    partial class AddRecurrenceFields
+    [Migration("20250813163057_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -46,6 +46,24 @@ namespace TaskManager.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("TaskManager.Data.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("TaskManager.Data.Models.Tag", b =>
@@ -83,6 +101,9 @@ namespace TaskManager.Data.Migrations
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsReminded")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("ParentTaskId")
                         .HasColumnType("int");
 
@@ -98,6 +119,9 @@ namespace TaskManager.Data.Migrations
 
                     b.Property<string>("RecurrenceRule")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ReminderTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -171,6 +195,21 @@ namespace TaskManager.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("TaskManager.Data.Models.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+                });
+
             modelBuilder.Entity("TaskManager.Data.Models.Project", b =>
                 {
                     b.HasOne("TaskManager.Data.Models.User", "User")
@@ -225,9 +264,33 @@ namespace TaskManager.Data.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("TaskManager.Data.Models.UserRole", b =>
+                {
+                    b.HasOne("TaskManager.Data.Models.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TaskManager.Data.Models.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TaskManager.Data.Models.Project", b =>
                 {
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("TaskManager.Data.Models.Role", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("TaskManager.Data.Models.Tag", b =>
@@ -245,6 +308,8 @@ namespace TaskManager.Data.Migrations
             modelBuilder.Entity("TaskManager.Data.Models.User", b =>
                 {
                     b.Navigation("Tasks");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

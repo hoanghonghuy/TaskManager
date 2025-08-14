@@ -41,7 +41,6 @@ namespace TaskManager.Web.ViewModels
 
         // Thuộc tính mới cho Nhắc nhở
         [Display(Name = "Thời gian nhắc nhở")]
-        [DataType(DataType.DateTime)]
-        public DateTime? ReminderTime { get; set; }
+        public string? ReminderTimeString { get; set; }
     }
 }

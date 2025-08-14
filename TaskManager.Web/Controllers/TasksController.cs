@@ -5,8 +5,9 @@ using System.Security.Claims;
 using TaskManager.Data;
 using TaskManager.Web.ViewModels;
 using TaskManager.Data.Models;
-using BCrypt.Net;
-using System.Diagnostics;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace TaskManager.Web.Controllers
@@ -31,40 +32,52 @@ namespace TaskManager.Web.Controllers
                     .ThenInclude(tt => tt.Tag)
                 .Where(t => t.UserId == int.Parse(userId!));
 
+            // --- Các bộ lọc ---
+            ViewBag.ProjectId = projectId;
+            ViewBag.Filter = status;
+            ViewBag.SearchString = searchString;
+
             if (projectId.HasValue)
             {
                 userTasksQuery = userTasksQuery.Where(t => t.ProjectId == projectId.Value);
-                ViewBag.ProjectId = projectId.Value;
             }
 
             if (!string.IsNullOrEmpty(status))
             {
                 userTasksQuery = userTasksQuery.Where(t => t.Status == status);
-                ViewBag.Filter = status;
             }
 
             if (!string.IsNullOrEmpty(searchString))
             {
                 userTasksQuery = userTasksQuery.Where(t => t.Title!.Contains(searchString) || (t.Description != null && t.Description.Contains(searchString)));
-                ViewBag.SearchString = searchString;
             }
 
-            ViewBag.DateSortParam = string.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
-            ViewBag.PrioritySortParam = sortOrder == "priority" ? "priority_desc" : "priority";
+            // --- LỌC THÔNG MINH CÁC CÔNG VIỆC LẶP LẠI ---
+            var today = DateTime.UtcNow.Date;
+            userTasksQuery = userTasksQuery
+                .Where(t =>
+                    string.IsNullOrEmpty(t.RecurrenceRule) ||
+                    t.Status != "Completed" ||
+                    (t.Status == "Completed" && t.DueDate >= today.AddDays(-7))
+                );
+
+            // --- Sắp xếp ---
+            ViewBag.DateSortParam = string.IsNullOrEmpty(sortOrder) || sortOrder == "date_desc" ? "date_asc" : "date_desc";
+            ViewBag.PrioritySortParam = sortOrder == "priority_asc" ? "priority_desc" : "priority_asc";
 
             switch (sortOrder)
             {
-                case "date_desc":
-                    userTasksQuery = userTasksQuery.OrderByDescending(t => t.CreatedAt);
-                    break;
-                case "priority":
-                    userTasksQuery = userTasksQuery.OrderBy(t => t.Priority);
+                case "date_asc":
+                    userTasksQuery = userTasksQuery.OrderBy(t => t.DueDate ?? t.CreatedAt);
                     break;
                 case "priority_desc":
-                    userTasksQuery = userTasksQuery.OrderByDescending(t => t.Priority);
+                    userTasksQuery = userTasksQuery.OrderByDescending(t => t.Priority == "High" ? 3 : t.Priority == "Medium" ? 2 : t.Priority == "Low" ? 1 : 0);
                     break;
-                default:
-                    userTasksQuery = userTasksQuery.OrderBy(t => t.CreatedAt);
+                case "priority_asc":
+                    userTasksQuery = userTasksQuery.OrderBy(t => t.Priority == "High" ? 3 : t.Priority == "Medium" ? 2 : t.Priority == "Low" ? 1 : 0);
+                    break;
+                default: // Mặc định là date_desc
+                    userTasksQuery = userTasksQuery.OrderByDescending(t => t.DueDate ?? t.CreatedAt);
                     break;
             }
 
@@ -92,6 +105,24 @@ namespace TaskManager.Web.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (userId == null) return RedirectToAction("Login", "Account");
 
+                // --- XỬ LÝ THẺ (TAGS) ---
+                var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
+                var tagsToAssociate = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
+                foreach (var tagName in tagNames.Except(tagsToAssociate.Select(t => t.Name)))
+                {
+                    var newTag = new Tag { Name = tagName };
+                    _context.Tags.Add(newTag);
+                    tagsToAssociate.Add(newTag);
+                }
+
+                // --- XỬ LÝ THỜI GIAN NHẮC NHỞ ---
+                DateTime? reminderTime = null;
+                if (!string.IsNullOrEmpty(model.ReminderTimeString) && DateTime.TryParse(model.ReminderTimeString, out var parsedTime))
+                {
+                    reminderTime = parsedTime.ToUniversalTime();
+                }
+
+                // --- TẠO CÔNG VIỆC GỐC ---
                 var newTask = new TaskManager.Data.Models.Task
                 {
                     Title = model.Title,
@@ -104,79 +135,59 @@ namespace TaskManager.Web.Controllers
                     ProjectId = model.ProjectId,
                     ParentTaskId = model.ParentTaskId,
                     RecurrenceRule = model.RecurrenceRule,
-                    RecurrenceEndDate = model.RecurrenceEndDate
+                    RecurrenceEndDate = model.RecurrenceEndDate,
+                    ReminderTime = reminderTime
                 };
 
-                // Xử lý thẻ
-                var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
-                var existingTags = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
-                foreach (var tagName in tagNames.Except(existingTags.Select(t => t.Name)))
-                {
-                    existingTags.Add(new Tag { Name = tagName });
-                }
-                foreach (var tag in existingTags)
+                foreach (var tag in tagsToAssociate)
                 {
                     newTask.TaskTags.Add(new TaskTag { Tag = tag });
                 }
-
                 _context.Tasks.Add(newTask);
 
-                // Xử lý công việc lặp lại
+                // --- TẠO CÁC CÔNG VIỆC LẶP LẠI (NẾU CÓ) ---
                 if (!string.IsNullOrEmpty(model.RecurrenceRule) && model.RecurrenceEndDate.HasValue && model.DueDate.HasValue)
                 {
                     var currentDate = model.DueDate.Value;
-                    while (currentDate <= model.RecurrenceEndDate.Value)
+                    while (true)
                     {
-                        if (currentDate != model.DueDate.Value)
-                        {
-                            var recurringTask = new TaskManager.Data.Models.Task
-                            {
-                                Title = model.Title,
-                                Description = model.Description,
-                                DueDate = currentDate,
-                                Status = "Pending",
-                                Priority = model.Priority,
-                                CreatedAt = DateTime.UtcNow,
-                                UserId = int.Parse(userId!),
-                                ProjectId = model.ProjectId,
-                                RecurrenceRule = model.RecurrenceRule,
-                                RecurrenceEndDate = model.RecurrenceEndDate
-                            };
-
-                            foreach (var tag in existingTags)
-                            {
-                                recurringTask.TaskTags.Add(new TaskTag { Tag = tag });
-                            }
-                            _context.Tasks.Add(recurringTask);
-                        }
-
                         switch (model.RecurrenceRule)
                         {
-                            case "Daily":
-                                currentDate = currentDate.AddDays(1);
-                                break;
-                            case "Weekly":
-                                currentDate = currentDate.AddDays(7);
-                                break;
-                            case "Monthly":
-                                currentDate = currentDate.AddMonths(1);
-                                break;
-                            case "Yearly":
-                                currentDate = currentDate.AddYears(1);
-                                break;
+                            case "Daily": currentDate = currentDate.AddDays(1); break;
+                            case "Weekly": currentDate = currentDate.AddDays(7); break;
+                            case "Monthly": currentDate = currentDate.AddMonths(1); break;
+                            case "Yearly": currentDate = currentDate.AddYears(1); break;
+                            default: goto EndLoop;
                         }
+                        if (currentDate > model.RecurrenceEndDate.Value) break;
+
+                        var recurringTask = new TaskManager.Data.Models.Task
+                        {
+                            Title = model.Title,
+                            Description = model.Description,
+                            DueDate = currentDate,
+                            Status = "Pending",
+                            Priority = model.Priority,
+                            CreatedAt = DateTime.UtcNow,
+                            UserId = int.Parse(userId!),
+                            ProjectId = model.ProjectId,
+                            RecurrenceRule = model.RecurrenceRule,
+                            RecurrenceEndDate = model.RecurrenceEndDate,
+                            ReminderTime = reminderTime
+                        };
+                        foreach (var tag in tagsToAssociate)
+                        {
+                            recurringTask.TaskTags.Add(new TaskTag { Tag = tag });
+                        }
+                        _context.Tasks.Add(recurringTask);
                     }
+                EndLoop:;
                 }
 
                 await _context.SaveChangesAsync();
-
-                if (newTask.ParentTaskId.HasValue)
-                {
-                    return RedirectToAction("Details", new { id = newTask.ParentTaskId.Value });
-                }
-
                 return RedirectToAction("Index");
             }
+
             var userIdForProjects = User.FindFirstValue(ClaimTypes.NameIdentifier);
             model.Projects = await _context.Projects.Where(p => p.UserId == int.Parse(userIdForProjects!)).ToListAsync();
             return View(model);
@@ -191,8 +202,7 @@ namespace TaskManager.Web.Controllers
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var task = await _context.Tasks.Include(t => t.TaskTags)!.ThenInclude(tt => tt.Tag).FirstOrDefaultAsync(t => t.Id == id);
-            if (task == null) return NotFound();
-            if (task.UserId != int.Parse(userId!)) return Forbid();
+            if (task == null || task.UserId != int.Parse(userId!)) return NotFound();
 
             var projects = await _context.Projects.Where(p => p.UserId == int.Parse(userId!)).ToListAsync();
 
@@ -207,7 +217,12 @@ namespace TaskManager.Web.Controllers
                 Projects = projects,
                 TagNames = string.Join(", ", task.TaskTags.Select(tt => tt.Tag.Name)),
                 RecurrenceRule = task.RecurrenceRule,
-                RecurrenceEndDate = task.RecurrenceEndDate
+                RecurrenceEndDate = task.RecurrenceEndDate,
+
+                
+                // Chuyển đổi DateTime từ UTC (trong DB) sang giờ địa phương và định dạng lại
+                // thành chuỗi "yyyy-MM-ddTHH:mm" mà input datetime-local yêu cầu.
+                ReminderTimeString = task.ReminderTime?.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")
             };
             return View(model);
         }
@@ -219,10 +234,11 @@ namespace TaskManager.Web.Controllers
             if (ModelState.IsValid)
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var taskToUpdate = await _context.Tasks.Include(t => t.TaskTags)!.FirstOrDefaultAsync(t => t.Id == model.Id);
+                var taskToUpdate = await _context.Tasks.Include(t => t.TaskTags)!.ThenInclude(t => t.Tag).FirstOrDefaultAsync(t => t.Id == model.Id);
 
                 if (taskToUpdate == null || taskToUpdate.UserId != int.Parse(userId!)) return NotFound();
 
+                // Cập nhật các thuộc tính
                 taskToUpdate.Title = model.Title;
                 taskToUpdate.Description = model.Description;
                 taskToUpdate.DueDate = model.DueDate;
@@ -231,22 +247,42 @@ namespace TaskManager.Web.Controllers
                 taskToUpdate.RecurrenceRule = model.RecurrenceRule;
                 taskToUpdate.RecurrenceEndDate = model.RecurrenceEndDate;
 
-                var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
-                var existingTags = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
-                foreach (var tagName in tagNames.Except(existingTags.Select(t => t.Name)))
+                // Cập nhật ReminderTime
+                if (!string.IsNullOrEmpty(model.ReminderTimeString) && DateTime.TryParse(model.ReminderTimeString, out var parsedTime))
                 {
-                    existingTags.Add(new Tag { Name = tagName });
+                    taskToUpdate.ReminderTime = parsedTime.ToUniversalTime();
+                }
+                else
+                {
+                    taskToUpdate.ReminderTime = null;
                 }
 
-                taskToUpdate.TaskTags.Clear();
-                foreach (var tag in existingTags)
+                // Cập nhật lại trạng thái IsReminded nếu thời gian nhắc nhở thay đổi
+                taskToUpdate.IsReminded = false;
+
+                // Cập nhật Tags
+                var tagNames = model.TagNames.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList();
+                var tagsToAssociate = await _context.Tags.Where(t => tagNames.Contains(t.Name)).ToListAsync();
+                foreach (var tagName in tagNames.Except(tagsToAssociate.Select(t => t.Name)))
                 {
-                    taskToUpdate.TaskTags.Add(new TaskTag { Tag = tag });
+                    var newTag = new Tag { Name = tagName };
+                    _context.Tags.Add(newTag);
+                    tagsToAssociate.Add(newTag);
+                }
+
+                // Xóa các tag cũ và thêm các tag mới
+                taskToUpdate.TaskTags.Clear();
+                await _context.SaveChangesAsync(); // Lưu để xóa các tag cũ
+
+                foreach (var tag in tagsToAssociate)
+                {
+                    taskToUpdate.TaskTags.Add(new TaskTag { Task = taskToUpdate, Tag = tag });
                 }
 
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
+
             var userIdForProjects = User.FindFirstValue(ClaimTypes.NameIdentifier);
             model.Projects = await _context.Projects.Where(p => p.UserId == int.Parse(userIdForProjects!)).ToListAsync();
             return View(model);
@@ -268,8 +304,8 @@ namespace TaskManager.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var task = await _context.Tasks.FindAsync(id);
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var task = await _context.Tasks.FindAsync(id);
             if (task == null || task.UserId != int.Parse(userId!)) return NotFound();
             _context.Tasks.Remove(task);
             await _context.SaveChangesAsync();
@@ -291,41 +327,29 @@ namespace TaskManager.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
         #endregion
+
         #region Actions for Task Details
-        // GET: Tasks/Details/5
         public async Task<IActionResult> Details(int? id, bool isPartial = false)
         {
             if (id == null)
             {
-                if (isPartial)
-                {
-                    return PartialView("_TaskDetailsPartial", null);
-                }
-                return NotFound();
+                return isPartial ? PartialView("_TaskDetailsPartial", null) : NotFound();
             }
 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var task = await _context.Tasks
                 .Include(t => t.Project)
                 .Include(t => t.TaskTags)
                 .ThenInclude(tt => tt.Tag)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == int.Parse(userId!));
 
             if (task == null)
             {
-                if (isPartial)
-                {
-                    return PartialView("_TaskDetailsPartial", null);
-                }
-                return NotFound();
+                return isPartial ? PartialView("_TaskDetailsPartial", null) : NotFound();
             }
 
-            if (isPartial)
-            {
-                return PartialView("_TaskDetailsPartial", task);
-            }
-            return View(task);
+            return isPartial ? PartialView("_TaskDetailsPartial", task) : View(task);
         }
         #endregion
     }
-
 }
