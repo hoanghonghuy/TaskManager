@@ -10,6 +10,17 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/custom.css" asp-append-version="true" />
+
+    <script>
+        (function() {
+            const storageKey = 'theme-preference';
+            const savedTheme = localStorage.getItem(storageKey);
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme ? savedTheme : (systemPrefersDark ? 'dark' : 'light');
+            document.documentElement.className = 'theme-' + theme; 
+        })();
+    </script>
+
 </head>
 <body>
     @if (User.Identity!.IsAuthenticated)
@@ -81,6 +92,7 @@
     </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @* <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script> *@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -125,14 +137,13 @@
             // --- Logic cho chuyển đổi theme ---
             const themeSwitcher = document.getElementById('theme-switcher');
             if(themeSwitcher) {
-                const body = document.body;
+                const htmlEl = document.documentElement;
                 const sunIcon = 'bi-sun-fill';
                 const moonIcon = 'bi-moon-stars-fill';
                 const storageKey = 'theme-preference';
 
-                const setTheme = (theme) => {
-                    body.className = `theme-${theme}`;
-                    const icon = themeSwitcher.querySelector('i');
+                const updateSwitcherUI = (theme) => {
+                     const icon = themeSwitcher.querySelector('i');
                     const textSpan = themeSwitcher.querySelector('span');
                     if (theme === 'dark') {
                         icon.className = `bi ${sunIcon} me-2`;
@@ -141,18 +152,19 @@
                         icon.className = `bi ${moonIcon} me-2`;
                         textSpan.textContent = 'Giao diện tối';
                     }
-                    localStorage.setItem(storageKey, theme);
                 };
 
                 themeSwitcher.addEventListener('click', (e) => {
                     e.preventDefault();
                     const currentTheme = localStorage.getItem(storageKey) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                    setTheme(newTheme);
+                    htmlEl.className = 'theme-' + newTheme; // Đổi class trên <html>
+                    localStorage.setItem(storageKey, newTheme); // Lưu lựa chọn
+                    updateSwitcherUI(newTheme); // Cập nhật nút bấm
                 });
 
                 const initialTheme = localStorage.getItem(storageKey) || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                setTheme(initialTheme);
+                updateSwitcherUI(initialTheme);
             }
 
             // --- Logic cho ô thêm nhanh công việc ---
@@ -192,7 +204,95 @@
                     }
                 });
             }
+            // --- Xử lý kết quả trả về từ ToggleTaskStatus ---
+            $(document).on('submit', '.subtask-checkbox-form, .task-checkbox form', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: form.serialize(),
+                    success: function(response) {
+                        if(response.success) {
+                            // Cập nhật giao diện cho công việc/công việc con
+                            $('#task-row-' + response.taskId + ', #subtask-item-' + response.taskId).toggleClass('task-completed subtask-completed');
 
+                            // Đổi icon checkbox
+                            var button = $('#task-row-' + response.taskId + ' .btn-check-task, #subtask-item-' + response.taskId + ' .btn-check-task');
+                            var icon = button.find('i');
+                            if(response.newStatus === 'Completed') {
+                                icon.removeClass('bi-circle').addClass('bi-check-circle-fill');
+                                button.closest('.task-item, .subtask-item').find('.task-title, .subtask-title').addClass('text-decoration-line-through');
+                            } else {
+                                icon.removeClass('bi-check-circle-fill').addClass('bi-circle');
+                                 button.closest('.task-item, .subtask-item').find('.task-title, .subtask-title').removeClass('text-decoration-line-through');
+                            }
+                        }
+                    }
+                });
+            });
+            // -- Xử lý form bằng Fetch --
+            document.addEventListener('submit', function(e) {
+                // Xử lý form Thêm Subtask
+                if (e.target.matches('#form-add-subtask')) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('subtask-list').insertAdjacentHTML('beforeend', html);
+                        form.querySelector('input[name="Title"]').value = ''; // Xóa input
+                    })
+                    .catch(error => console.error('Error adding subtask:', error));
+                }
+
+                // Xử lý form Toggle Status (cả task chính và subtask)
+                if (e.target.matches('.subtask-checkbox-form, .task-checkbox form')) {
+                    e.preventDefault();
+                    const form = e.target;
+                    const formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                    })
+                    .then(response => response.json())
+                    .then(response => {
+                        if (response.success) {
+                            const taskId = response.taskId;
+                            const taskRow = document.getElementById('task-row-' + taskId);
+                            const subtaskRow = document.getElementById('subtask-item-' + taskId);
+                            const targetRow = taskRow || subtaskRow;
+
+                            if(targetRow) {
+                                targetRow.classList.toggle('task-completed');
+                                targetRow.classList.toggle('subtask-completed');
+
+                                const button = targetRow.querySelector('.btn-check-task');
+                                const icon = button.querySelector('i');
+                                const title = targetRow.querySelector('.task-title, .subtask-title');
+
+                                if (response.newStatus === 'Completed') {
+                                    icon.classList.remove('bi-circle');
+                                    icon.classList.add('bi-check-circle-fill');
+                                    if(title) title.classList.add('text-decoration-line-through');
+                                } else {
+                                    icon.classList.remove('bi-check-circle-fill');
+                                    icon.classList.add('bi-circle');
+                                    if(title) title.classList.remove('text-decoration-line-through');
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error toggling status:', error));
+                }
+            });
         })(); 
     </script>
 

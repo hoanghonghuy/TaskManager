@@ -1,5 +1,7 @@
 ﻿@model TaskManager.Web.ViewModels.LoginViewModel
-
+@{
+    Layout = "_Layout_Auth";
+}
 @{
     ViewData["Title"] = "Đăng nhập";
 }
@@ -27,6 +29,9 @@
     </div>
     <div class="text-center mt-3">
         <p>Bạn chưa có tài khoản? <a asp-action="Register">Đăng ký ngay</a>.</p>
+    </div>
+    <div class="text-center mt-2">
+        <a asp-action="ForgotPassword">Quên mật khẩu?</a>
     </div>
 </div>
 

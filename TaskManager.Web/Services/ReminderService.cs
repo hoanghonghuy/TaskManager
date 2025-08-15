@@ -29,8 +29,7 @@ namespace TaskManager.Web.Services
         {
             _logger.LogInformation("Reminder Service is working.");
 
-            // Vì đây là một background service, chúng ta cần tạo một scope riêng
-            // để lấy ApplicationDbContext, tránh các vấn đề về luồng.
+            // tạo một scope riêng để lấy ApplicationDbContext, tránh các vấn đề về luồng.
             using (var scope = _serviceProvider.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -50,9 +49,6 @@ namespace TaskManager.Web.Services
                     {
                         // =======================================================
                         // GỬI NHẮC NHỞ TẠI ĐÂY
-                        // Hiện tại, chúng ta sẽ chỉ log ra console để kiểm tra.
-                        // Sau này, bạn có thể tích hợp dịch vụ gửi email (SendGrid, MailKit)
-                        // hoặc gửi thông báo (SignalR) tại đây.
                         // =======================================================
                         _logger.LogWarning($"REMINDER: Task '{task.Title}' is due! (ID: {task.Id})");
 

@@ -1,13 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Security.Claims;
 using TaskManager.Data;
-using TaskManager.Web.ViewModels;
+using TaskManager.Web.ViewModels; 
 
 namespace TaskManager.Web.Controllers
 {
@@ -27,24 +24,31 @@ namespace TaskManager.Web.Controllers
             var currentMonth = month ?? today.Month;
             var currentYear = year ?? today.Year;
 
-            var startDate = new DateTime(currentYear, currentMonth, 1);
-            var firstDayOfWeek = startDate.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)startDate.DayOfWeek;
-            var daysBefore = firstDayOfWeek - (int)DayOfWeek.Monday;
-            var calendarStartDate = startDate.AddDays(-daysBefore);
+            // Đảm bảo tháng và năm hợp lệ
+            if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+            if (currentMonth > 12) { currentMonth = 1; currentYear++; }
 
-            var daysInGrid = new List<DateTime>();
-            for (int i = 0; i < 35; i++) // 5 hàng x 7 ngày = 35 ngày
-            {
-                daysInGrid.Add(calendarStartDate.AddDays(i));
-            }
+            var startDateOfMonth = new DateTime(currentYear, currentMonth, 1);
+
+            // Tính ngày bắt đầu của ô lịch đầu tiên (có thể là của tháng trước)
+            var firstDayOfWeek = (int)startDateOfMonth.DayOfWeek;
+            // Điều chỉnh để Thứ Hai là ngày đầu tuần (1) và Chủ Nhật là cuối tuần (7)
+            var daysToSubtract = (firstDayOfWeek == 0) ? 6 : firstDayOfWeek - 1;
+            var calendarStartDate = startDateOfMonth.AddDays(-daysToSubtract);
+
+            // Tạo danh sách 35 ngày (5 hàng x 7 ngày) để hiển thị trên lịch
+            var daysInGrid = Enumerable.Range(0, 35).Select(i => calendarStartDate.AddDays(i)).ToList();
             var calendarEndDate = daysInGrid.Last();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var tasks = await _context.Tasks
-                .Where(t => t.UserId == int.Parse(userId!))
-                .Where(t => t.DueDate >= calendarStartDate && t.DueDate <= calendarEndDate)
+                .Where(t => t.UserId == int.Parse(userId!) &&
+                            t.DueDate.HasValue &&
+                            t.DueDate.Value.Date >= daysInGrid.First().Date &&
+                            t.DueDate.Value.Date <= calendarEndDate.Date)
                 .ToListAsync();
 
+            // Nhóm các công việc theo ngày để dễ dàng hiển thị
             var tasksByDay = tasks
                 .GroupBy(t => t.DueDate!.Value.Date)
                 .ToDictionary(g => g.Key, g => g.ToList());
@@ -53,7 +57,7 @@ namespace TaskManager.Web.Controllers
             {
                 Year = currentYear,
                 Month = currentMonth,
-                MonthName = startDate.ToString("MMMM", new CultureInfo("vi-VN")),
+                MonthName = startDateOfMonth.ToString("MMMM", new CultureInfo("vi-VN")),
                 DaysInGrid = daysInGrid,
                 TasksByDay = tasksByDay
             };

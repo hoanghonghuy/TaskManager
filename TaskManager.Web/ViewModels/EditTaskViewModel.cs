@@ -39,7 +39,7 @@ namespace TaskManager.Web.ViewModels
         [DataType(DataType.Date)]
         public DateTime? RecurrenceEndDate { get; set; }
 
-        // Thuộc tính mới cho Nhắc nhở
+        
         [Display(Name = "Thời gian nhắc nhở")]
         public string? ReminderTimeString { get; set; }
     }

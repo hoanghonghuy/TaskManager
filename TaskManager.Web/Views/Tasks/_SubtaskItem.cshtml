@@ -1,0 +1,24 @@
+﻿@model TaskManager.Data.Models.Task
+
+<div class="subtask-item d-flex align-items-center gap-3 @(Model.Status == "Completed" ? "subtask-completed" : "")" id="subtask-item-@Model.Id">
+    <!-- Checkbox -->
+    <form class="subtask-checkbox-form" asp-action="ToggleTaskStatus" method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="btn-check-task" title="@(Model.Status == "Completed" ? "Bỏ hoàn thành" : "Hoàn thành")">
+            @if (Model.Status == "Completed")
+            {
+                <i class="bi bi-check-circle-fill"></i>
+            }
+            else
+            {
+
+                <i class="bi bi-circle"></i>
+            }
+        </button>
+    </form>
+
+    <!-- Title -->
+    <span class="subtask-title flex-grow-1 @(Model.Status == "Completed" ? "text-decoration-line-through" : "")">
+        @Model.Title
+    </span>
+</div>

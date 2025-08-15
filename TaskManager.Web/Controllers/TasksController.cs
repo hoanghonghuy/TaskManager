@@ -30,7 +30,7 @@ namespace TaskManager.Web.Controllers
                 .Include(t => t.Project)
                 .Include(t => t.TaskTags)!
                     .ThenInclude(tt => tt.Tag)
-                .Where(t => t.UserId == int.Parse(userId!));
+                .Where(t => t.UserId == int.Parse(userId!) && t.ParentTaskId == null);
 
             // --- Các bộ lọc ---
             ViewBag.ProjectId = projectId;
@@ -185,6 +185,13 @@ namespace TaskManager.Web.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" && newTask.ParentTaskId.HasValue)
+                {
+                    
+                    return PartialView("_SubtaskItem", newTask);
+                }
+
                 return RedirectToAction("Index");
             }
 
@@ -321,32 +328,29 @@ namespace TaskManager.Web.Controllers
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
             var task = await _context.Tasks.FindAsync(id);
             if (task == null || task.UserId != int.Parse(userId!)) return NotFound();
+
             task.Status = task.Status == "Completed" ? "Pending" : "Completed";
             _context.Update(task);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Json(new { success = true, newStatus = task.Status, taskId = task.Id });
         }
         #endregion
 
         #region Actions for Task Details
         public async Task<IActionResult> Details(int? id, bool isPartial = false)
         {
-            if (id == null)
-            {
-                return isPartial ? PartialView("_TaskDetailsPartial", null) : NotFound();
-            }
+            if (id == null) { return isPartial ? PartialView("_TaskDetailsPartial", null) : NotFound(); }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var task = await _context.Tasks
                 .Include(t => t.Project)
-                .Include(t => t.TaskTags)
-                .ThenInclude(tt => tt.Tag)
+                .Include(t => t.TaskTags).ThenInclude(tt => tt.Tag)
+                
+                .Include(t => t.Subtasks) 
                 .FirstOrDefaultAsync(m => m.Id == id && m.UserId == int.Parse(userId!));
 
-            if (task == null)
-            {
-                return isPartial ? PartialView("_TaskDetailsPartial", null) : NotFound();
-            }
+            if (task == null) { return isPartial ? PartialView("_TaskDetailsPartial", null) : NotFound(); }
 
             return isPartial ? PartialView("_TaskDetailsPartial", task) : View(task);
         }

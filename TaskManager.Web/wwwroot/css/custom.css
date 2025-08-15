@@ -1,10 +1,15 @@
-﻿/* =================================================================
-   BASE & SHARED STYLES
-================================================================= */
+﻿
+html {
+    /* Các thuộc tính màu sắc chính sẽ nằm ở đây */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 body {
     font-family: 'Inter', sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease;
     overflow-y: hidden;
+    /* Kế thừa màu từ thẻ html */
+    background-color: inherit;
+    color: inherit;
 }
 
 .main-content {
@@ -38,107 +43,107 @@ body {
 /* =================================================================
    DARK THEME
 ================================================================= */
-body.theme-dark {
+html.theme-dark {
     background-color: #111827;
     color: #f9fafb;
 }
     /* --- Components --- */
-    body.theme-dark .sidebar {
+    html.theme-dark .sidebar {
         background-color: #111827;
         border-right: 1px solid #374151;
     }
 
-        body.theme-dark .sidebar .nav-link {
+        html.theme-dark .sidebar .nav-link {
             color: #9ca3af;
             border-radius: 6px;
         }
 
-            body.theme-dark .sidebar .nav-link:hover, body.theme-dark .sidebar .nav-link.active {
+            html.theme-dark .sidebar .nav-link:hover, html.theme-dark .sidebar .nav-link.active {
                 color: #ffffff;
                 background-color: #374151;
             }
 
-    body.theme-dark .header-navbar {
+    html.theme-dark .header-navbar {
         background-color: #1f2937;
         border-bottom: 1px solid #374151;
     }
 
-    body.theme-dark .form-control, body.theme-dark .form-select {
+    html.theme-dark .form-control, html.theme-dark .form-select {
         background-color: #374151;
         color: #f9fafb;
         border: 1px solid #4b5563;
         border-radius: 6px;
     }
 
-        body.theme-dark .form-control::placeholder {
+        html.theme-dark .form-control::placeholder {
             color: #9ca3af;
         }
 
-        body.theme-dark .form-control:focus, body.theme-dark .form-select:focus {
+        html.theme-dark .form-control:focus, html.theme-dark .form-select:focus {
             border-color: #60a5fa;
             box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
         }
 
-        body.theme-dark .form-control:read-only {
+        html.theme-dark .form-control:read-only {
             opacity: 0.6;
         }
 
-    body.theme-dark .card {
+    html.theme-dark .card {
         background-color: #1f2937;
         border: 1px solid #374151;
         border-radius: 8px;
     }
 
-    body.theme-dark hr {
+    html.theme-dark hr {
         border-top-color: #374151;
     }
 
-    body.theme-dark .dropdown-menu {
+    html.theme-dark .dropdown-menu {
         background-color: #374151;
         border-color: #4b5563;
         border-radius: 8px;
     }
 
-    body.theme-dark .dropdown-item {
+    html.theme-dark .dropdown-item {
         color: #f9fafb;
     }
 
-        body.theme-dark .dropdown-item:hover {
+        html.theme-dark .dropdown-item:hover {
             background-color: #4b5563;
         }
 
-    body.theme-dark a {
+    html.theme-dark a {
         color: #60a5fa;
         text-decoration: none;
     }
 
-        body.theme-dark a:hover {
+        html.theme-dark a:hover {
             color: #93c5fd;
         }
 
-    body.theme-dark .table {
+    html.theme-dark .table {
         color: #f9fafb;
     }
 
-        body.theme-dark .table thead th {
+        html.theme-dark .table thead th {
             color: #f9fafb;
             border-bottom: 2px solid #4b5563;
         }
 
-        body.theme-dark .table tbody td {
+        html.theme-dark .table tbody td {
             border-color: #374151;
         }
 
-    body.theme-dark .table-striped > tbody > tr:nth-of-type(odd) > * {
+    html.theme-dark .table-striped > tbody > tr:nth-of-type(odd) > * {
         background-color: rgba(255, 255, 255, 0.03);
     }
 
-    body.theme-dark .task-details-panel {
+    html.theme-dark .task-details-panel {
         background-color: #1f2937;
         border-left: 1px solid #374151;
     }
 
-    body.theme-dark .btn-close {
+    html.theme-dark .btn-close {
         filter: invert(1) grayscale(100%) brightness(200%);
     }
 
@@ -155,7 +160,7 @@ body.theme-dark {
     border-radius: 8px;
 }
 
-body.theme-dark .task-item-new {
+html.theme-dark .task-item-new {
     background-color: #1f2937;
 }
 
@@ -173,16 +178,16 @@ body.theme-dark .task-item-new {
     gap: 15px;
 }
 
-body.theme-dark .task-item {
+html.theme-dark .task-item {
     background-color: #1f2937;
     border-bottom: 1px solid #374151;
 }
 
-    body.theme-dark .task-item:hover {
+    html.theme-dark .task-item:hover {
         background-color: #374151;
     }
 
-body.theme-dark .task-list .task-item:last-child {
+html.theme-dark .task-list .task-item:last-child {
     border-bottom: none;
 }
 
@@ -196,15 +201,15 @@ body.theme-dark .task-list .task-item:last-child {
     display: flex;
 }
 
-body.theme-dark .btn-check-task {
+html.theme-dark .btn-check-task {
     color: #6b7280;
 }
 
-    body.theme-dark .btn-check-task:hover .bi-circle {
+    html.theme-dark .btn-check-task:hover .bi-circle {
         color: #60a5fa;
     }
 
-    body.theme-dark .btn-check-task .bi-check-circle-fill {
+    html.theme-dark .btn-check-task .bi-check-circle-fill {
         color: #22c55e;
     }
 
@@ -222,7 +227,7 @@ body.theme-dark .btn-check-task {
     font-weight: 500;
 }
 
-body.theme-dark .task-title {
+html.theme-dark .task-title {
     color: #f9fafb;
 }
 
@@ -233,7 +238,7 @@ body.theme-dark .task-title {
     margin-top: 4px;
 }
 
-body.theme-dark .task-meta {
+html.theme-dark .task-meta {
     color: #9ca3af;
 }
 
@@ -247,7 +252,7 @@ body.theme-dark .task-meta {
     font-weight: 500;
 }
 
-body.theme-dark .meta-overdue {
+html.theme-dark .meta-overdue {
     color: #f87171 !important;
 }
 
@@ -255,15 +260,15 @@ body.theme-dark .meta-overdue {
     font-size: 1rem;
 }
 
-body.theme-dark .priority-high {
+html.theme-dark .priority-high {
     color: #f87171;
 }
 
-body.theme-dark .priority-medium {
+html.theme-dark .priority-medium {
     color: #fbbf24;
 }
 
-body.theme-dark .priority-low {
+html.theme-dark .priority-low {
     color: #60a5fa;
 }
 
@@ -275,12 +280,204 @@ body.theme-dark .priority-low {
         text-decoration: line-through;
     }
 
+/* =================================================================
+   SUBTASK STYLES 
+================================================================= */
+.subtask-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+html.theme-dark .subtask-item {
+    border: 1px solid #374151;
+}
+
+    html.theme-dark .subtask-item:hover {
+        background-color: #374151;
+    }
+
+.subtask-completed {
+    opacity: 0.6;
+}
+
+.add-subtask-form .input-group-text {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+html.theme-dark .add-subtask-form .input-group-text {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+
+/* =================================================================
+   CALENDAR STYLES 
+================================================================= */
+.calendar-grid {
+    display: flex;
+    flex-direction: column;
+    height: 85vh;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    padding: 0.75rem 0;
+    font-weight: 500;
+}
+
+.calendar-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    /* <<< SỬA ĐỔI TẠI ĐÂY: TỪ 6 XUỐNG 5 HÀNG >>> */
+    grid-template-rows: repeat(5, 1fr);
+    flex-grow: 1;
+}
+
+.calendar-day {
+    padding: 0.5rem;
+    border-top: 1px solid;
+    border-left: 1px solid;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+    .calendar-day:nth-child(7n+1) {
+        border-left: none;
+    }
+
+.calendar-body > .calendar-day:nth-child(-n+7) {
+    border-top: none;
+}
+
+.day-number {
+    font-size: 0.875rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+}
+
+.day-today {
+    font-weight: bold;
+}
+
+.day-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+}
+
+.task-event {
+    display: block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+/* --- DARK THEME --- */
+html.theme-dark .calendar-grid {
+    border: 1px solid #374151;
+}
+
+html.theme-dark .calendar-header {
+    background-color: #1f2937;
+    color: #9ca3af;
+}
+
+html.theme-dark .calendar-day {
+    border-color: #374151;
+}
+
+html.theme-dark .day-other-month .day-number {
+    color: #4b5563;
+}
+
+html.theme-dark .day-today {
+    background-color: #60a5fa;
+    color: #111827;
+}
+
+html.theme-dark .task-event {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+    html.theme-dark .task-event:hover {
+        background-color: #4b5563;
+    }
+
+/* --- LIGHT THEME --- */
+html.theme-light .calendar-grid {
+    border: 1px solid #dee2e6;
+}
+
+html.theme-light .calendar-header {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+html.theme-light .calendar-day {
+    border-color: #e9ecef;
+}
+
+html.theme-light .day-other-month .day-number {
+    color: #adb5bd;
+}
+
+html.theme-light .day-today {
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+html.theme-light .task-event {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+    html.theme-light .task-event:hover {
+        background-color: #dde2e7;
+    }
+
+
+
+/* Style cho trang xác thực */
+html.theme-dark .auth-body {
+    background-color: #111827;
+}
+
+html.theme-light .auth-body {
+    background-color: #f8f9fa;
+}
+
 
 /* =================================================================
    LIGHT THEME
 ================================================================= */
-body.theme-light {
-    background-color: #f8f9fa;
-    color: #212529;
+html.theme-light .subtask-item {
+    border: 1px solid #dee2e6;
 }
-/* ... (các style Light Theme khác) ... */
+
+    html.theme-light .subtask-item:hover {
+        background-color: #e9ecef;
+    }
+
+html.theme-light .add-subtask-form .input-group-text {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+

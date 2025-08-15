@@ -2,58 +2,114 @@
 
 @if (Model != null)
 {
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="mb-0">
-            @Model.Title
-            @if (Model.Project != null)
-            {
-                <small class="text-muted">(@Model.Project.Name)</small>
-            }
-        </h3>
-        <span class="badge @(Model.Priority == "High" ? "bg-danger" : Model.Priority == "Medium" ? "bg-warning text-dark" : "bg-secondary")">
-            @Model.Priority
-        </span>
+    
+    <!-- THÔNG TIN CHI TIẾT CÔNG VIỆC CHA -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <h3 class="mb-0 me-3">@Model.Title</h3>
+        @if (Model.Priority != "None")
+        {
+            <span class="badge priority-badge priority-@Model.Priority.ToLower()">@Model.Priority</span>
+        }
     </div>
 
-    <div class="mb-3">
-        <i class="bi bi-clock me-2"></i>
-        <strong>Ngày tạo:</strong> @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+    <div class="task-details-meta d-flex flex-column gap-2 mb-4">
+        @if (Model.Project != null)
+        {
+            <div class="meta-item"><i class="bi bi-folder me-2"></i> @Model.Project.Name</div>
+        }
+        @if (Model.DueDate.HasValue)
+        {
+            <div class="meta-item @(Model.DueDate.Value.Date < DateTime.Today ? "meta-overdue" : "")">
+                <i class="bi bi-calendar-check me-2"></i>
+                Ngày hết hạn: @Model.DueDate.Value.ToString("dd/MM/yyyy")
+            </div>
+        }
+        @if (Model.ReminderTime.HasValue)
+        {
+            <div class="meta-item">
+                <i class="bi bi-bell me-2"></i>
+                Nhắc nhở lúc: @Model.ReminderTime.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.RecurrenceRule))
+        {
+            <div class="meta-item">
+                <i class="bi bi-arrow-repeat me-2"></i>
+                Lặp lại: @Model.RecurrenceRule
+            </div>
+        }
     </div>
-    @if (Model.DueDate.HasValue)
+
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
     {
-        <div class="mb-3">
-            <i class="bi bi-calendar-check me-2"></i>
-            <strong>Ngày hết hạn:</strong> @Model.DueDate.Value.ToString("dd/MM/yyyy")
-        </div>
+        <p class="task-description mb-4">@Model.Description</p>
     }
 
-    <div class="mb-4">
-        <i class="bi bi-info-circle me-2"></i>
-        <strong>Mô tả:</strong>
-        <p class="mt-2">@Model.Description</p>
-    </div>
-
-    @if (Model.TaskTags.Any())
+    @if (Model.TaskTags != null && Model.TaskTags.Any())
     {
         <div class="mb-4">
-            <i class="bi bi-tags me-2"></i>
-            <strong>Tags:</strong>
-            <div class="mt-2">
-                @foreach (var tag in Model.TaskTags.Select(tt => tt.Tag))
-                {
-                    <span class="badge bg-info text-dark me-1">@tag.Name</span>
-                }
-            </div>
+            @foreach (var tag in Model.TaskTags.Select(tt => tt.Tag))
+            {
+                <span class="badge bg-info-light me-1">@tag.Name</span>
+            }
         </div>
     }
 
-    <div class="mt-auto d-flex justify-content-end gap-2">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Sửa công việc">
+    <hr class="my-4" />
+
+
+    <!-- KHU VỰC QUẢN LÝ CÔNG VIỆC CON -->
+
+    <div class="subtask-section">
+        <h5 class="mb-3">Công việc con (@(Model.Subtasks?.Count(s => s.Status == "Completed") ?? 0)/@(Model.Subtasks?.Count ?? 0))</h5>
+
+        @if (Model.Subtasks != null && Model.Subtasks.Any())
+        {
+            <div class="progress mb-3" style="height: 5px;">
+                @{
+                    var total = Model.Subtasks.Count;
+                    var completed = Model.Subtasks.Count(s => s.Status == "Completed");
+                    var progressPercent = total > 0 ? (int)Math.Round((double)completed / total * 100) : 0;
+                }
+                <div class="progress-bar" role="progressbar" style="width: @progressPercent%;" aria-valuenow="@progressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        }
+
+        <div id="subtask-list" class="d-flex flex-column gap-2">
+            @if (Model.Subtasks != null && Model.Subtasks.Any())
+            {
+                @foreach (var subtask in Model.Subtasks.OrderBy(s => s.CreatedAt))
+                {
+                    <partial name="_SubtaskItem" model="subtask" />
+                }
+            }
+        </div>
+
+        <!-- Form thêm subtask mới -->
+        <div class="add-subtask-form mt-3">
+            <form id="form-add-subtask" asp-action="Create" asp-controller="Tasks" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ParentTaskId" value="@Model.Id" />
+                <input type="hidden" name="Priority" value="None" />
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-plus-lg"></i></span>
+                    <input type="text" name="Title" class="form-control" placeholder="Thêm công việc con..." required>
+                    <button type="submit" class="btn btn-primary">Thêm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
             <i class="bi bi-pencil-fill"></i> Sửa
         </a>
-        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Xóa công việc">
-            <i class="bi bi-trash-fill"></i> Xóa
-        </a>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa công việc này?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash-fill"></i> Xóa
+            </button>
+        </form>
     </div>
 }
 else

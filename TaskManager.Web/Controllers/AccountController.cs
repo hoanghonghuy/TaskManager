@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using TaskManager.Data;
 using TaskManager.Data.Models;
 using TaskManager.Web.ViewModels;
+using System.Security.Cryptography;
 
 namespace TaskManager.Web.Controllers
 {
@@ -216,7 +218,7 @@ namespace TaskManager.Web.Controllers
                 Username = user.Username,
                 Email = user.Email,
                 FullName = user.FullName,
-                // Chuyển thành chuỗi đã được định dạng ngay tại đây
+                // Chuyển thành chuỗi đã được định dạng 
                 CreatedAtString = user.CreatedAt.ToString("dd/MM/yyyy HH:mm")
             };
 
@@ -248,6 +250,93 @@ namespace TaskManager.Web.Controllers
 
             return View(model);
         }
+        #endregion
+        #region Forgot & Reset Password
+
+        [HttpGet]
+        [AllowAnonymous] // Cho phép người chưa đăng nhập truy cập
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == model.Email);
+                if (user == null)
+                {
+                    // Không thông báo cho người dùng biết email có tồn tại hay không vì lý do bảo mật
+                    return View("ForgotPasswordConfirmation");
+                }
+
+                // Tạo token reset ngẫu nhiên
+                var resetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+
+                user.PasswordResetToken = resetToken;
+                user.ResetTokenExpires = DateTime.UtcNow.AddHours(1); // Token hết hạn sau 1 giờ
+                await _context.SaveChangesAsync();
+
+                // Tạo link reset
+                var resetLink = Url.Action("ResetPassword", "Account", new { token = resetToken }, Request.Scheme);
+
+                // =================================================================
+                // GIẢ LẬP GỬI EMAIL
+                // 
+                // =================================================================
+                TempData["ResetLink"] = resetLink;
+
+                return View("ForgotPasswordConfirmation");
+            }
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword(string token)
+        {
+            var model = new ResetPasswordViewModel { Token = token };
+            return View(model);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _context.Users.SingleOrDefaultAsync(
+                    u => u.PasswordResetToken == model.Token && u.ResetTokenExpires > DateTime.UtcNow);
+
+                if (user == null)
+                {
+                    ModelState.AddModelError(string.Empty, "Token không hợp lệ hoặc đã hết hạn.");
+                    return View(model);
+                }
+
+                // Cập nhật mật khẩu mới
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+                user.PasswordResetAt = DateTime.UtcNow;
+                // Vô hiệu hóa token đã sử dụng
+                user.PasswordResetToken = null;
+                user.ResetTokenExpires = null;
+
+                await _context.SaveChangesAsync();
+
+                // (Tùy chọn) Gửi thông báo cho người dùng rằng mật khẩu của họ đã được thay đổi
+
+                return View("ResetPasswordConfirmation");
+            }
+
+            return View(model);
+        }
+
         #endregion
     }
 }
