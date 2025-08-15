@@ -190,6 +190,7 @@ namespace TaskManager.Web.Controllers
                 // 2. Băm và lưu mật khẩu mới
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.NewPassword);
                 await _context.SaveChangesAsync();
+                TempData["success"] = "Mật khẩu của bạn đã được thay đổi thành công. Vui lòng đăng nhập lại.";
 
                 // Sau khi đổi mật khẩu thành công, đăng xuất và chuyển hướng về trang đăng nhập
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -284,10 +285,10 @@ namespace TaskManager.Web.Controllers
                 // Tạo link reset
                 var resetLink = Url.Action("ResetPassword", "Account", new { token = resetToken }, Request.Scheme);
 
-                // =================================================================
+                
                 // GIẢ LẬP GỬI EMAIL
-                // 
-                // =================================================================
+                
+                
                 TempData["ResetLink"] = resetLink;
 
                 return View("ForgotPasswordConfirmation");
@@ -329,7 +330,7 @@ namespace TaskManager.Web.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // (Tùy chọn) Gửi thông báo cho người dùng rằng mật khẩu của họ đã được thay đổi
+                // Gửi thông báo cho người dùng rằng mật khẩu của họ đã được thay đổi
 
                 return View("ResetPasswordConfirmation");
             }

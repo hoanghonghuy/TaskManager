@@ -1,0 +1,27 @@
+﻿@if (TempData["success"] != null)
+{
+    <script type="text/javascript">
+        Toastify({
+            text: "@TempData["success"]",
+            duration: 3000,
+            close: true,
+            gravity: "top", // `top` or `bottom`
+            position: "right", // `left`, `center` or `right`
+            backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        }).showToast();
+    </script>
+}
+
+@if (TempData["error"] != null)
+{
+    <script type="text/javascript">
+         Toastify({
+            text: "@TempData["error"]",
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+        }).showToast();
+    </script>
+}

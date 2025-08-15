@@ -88,11 +88,26 @@ namespace TaskManager.Web.Controllers
 
         #region Create
         [HttpGet]
-        public async Task<IActionResult> Create(int? parentTaskId)
+        public async Task<IActionResult> Create(int? parentTaskId, [FromQuery] string? title, [FromQuery] string? dueDate, [FromQuery] string? priority, [FromQuery] string? tags)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var projects = await _context.Projects.Where(p => p.UserId == int.Parse(userId!)).ToListAsync();
-            var viewModel = new CreateTaskViewModel { Projects = projects, ParentTaskId = parentTaskId };
+
+            var viewModel = new CreateTaskViewModel
+            {
+                Projects = projects,
+                ParentTaskId = parentTaskId,
+                
+                Title = title ?? string.Empty,
+                Priority = priority ?? "None",
+                TagNames = tags ?? string.Empty
+            };
+
+            if (DateTime.TryParse(dueDate, out var parsedDueDate))
+            {
+                viewModel.DueDate = parsedDueDate;
+            }
+
             return View(viewModel);
         }
 
@@ -145,7 +160,7 @@ namespace TaskManager.Web.Controllers
                 }
                 _context.Tasks.Add(newTask);
 
-                // --- TẠO CÁC CÔNG VIỆC LẶP LẠI (NẾU CÓ) ---
+                // --- TẠO CÁC CÔNG VIỆC LẶP LẠI  ---
                 if (!string.IsNullOrEmpty(model.RecurrenceRule) && model.RecurrenceEndDate.HasValue && model.DueDate.HasValue)
                 {
                     var currentDate = model.DueDate.Value;
@@ -191,7 +206,7 @@ namespace TaskManager.Web.Controllers
                     
                     return PartialView("_SubtaskItem", newTask);
                 }
-
+                TempData["success"] = "Công việc đã được tạo thành công!";
                 return RedirectToAction("Index");
             }
 
@@ -227,8 +242,7 @@ namespace TaskManager.Web.Controllers
                 RecurrenceEndDate = task.RecurrenceEndDate,
 
                 
-                // Chuyển đổi DateTime từ UTC (trong DB) sang giờ địa phương và định dạng lại
-                // thành chuỗi "yyyy-MM-ddTHH:mm" mà input datetime-local yêu cầu.
+                // Chuyển đổi DateTime từ UTC (trong DB) sang giờ địa phương và định dạng lại thành chuỗi "yyyy-MM-ddTHH:mm" mà input datetime-local yêu cầu.
                 ReminderTimeString = task.ReminderTime?.ToLocalTime().ToString("yyyy-MM-ddTHH:mm")
             };
             return View(model);
@@ -285,8 +299,9 @@ namespace TaskManager.Web.Controllers
                 {
                     taskToUpdate.TaskTags.Add(new TaskTag { Task = taskToUpdate, Tag = tag });
                 }
-
+                
                 await _context.SaveChangesAsync();
+                TempData["success"] = "Công việc đã được cập nhật!";
                 return RedirectToAction("Index");
             }
 
@@ -316,6 +331,7 @@ namespace TaskManager.Web.Controllers
             if (task == null || task.UserId != int.Parse(userId!)) return NotFound();
             _context.Tasks.Remove(task);
             await _context.SaveChangesAsync();
+            TempData["success"] = "Công việc đã được xóa thành công!";
             return RedirectToAction(nameof(Index));
         }
 

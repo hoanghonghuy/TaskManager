@@ -47,9 +47,7 @@ namespace TaskManager.Web.Services
                     _logger.LogInformation($"Found {tasksToRemind.Count} tasks to remind.");
                     foreach (var task in tasksToRemind)
                     {
-                        // =======================================================
-                        // GỬI NHẮC NHỞ TẠI ĐÂY
-                        // =======================================================
+                        
                         _logger.LogWarning($"REMINDER: Task '{task.Title}' is due! (ID: {task.Id})");
 
                         // Đánh dấu là đã nhắc nhở để không gửi lại

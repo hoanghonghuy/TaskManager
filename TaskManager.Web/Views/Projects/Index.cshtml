@@ -18,7 +18,7 @@
                 <a asp-controller="Tasks" asp-action="Index" asp-route-projectId="@project.Id">@project.Name</a>
                 <form asp-action="Delete" asp-route-id="@project.Id" method="post" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa danh sách này? Tất cả công việc trong đó cũng sẽ bị xóa.');">Xóa</button>
                 </form>
             </li>
         }

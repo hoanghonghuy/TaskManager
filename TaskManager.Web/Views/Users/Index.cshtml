@@ -31,7 +31,7 @@
                 <td>@user.CreatedAt.ToShortDateString()</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                    <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger">Xóa</a>
+                    <a asp-action="Delete" asp-route-id="@user.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?');">Xóa</a>
                 </td>
             </tr>
         }

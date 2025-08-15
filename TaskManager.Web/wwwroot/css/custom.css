@@ -1,6 +1,6 @@
 ﻿
 html {
-    /* Các thuộc tính màu sắc chính sẽ nằm ở đây */
+    
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -40,9 +40,9 @@ body {
     margin-right: 400px;
 }
 
-/* =================================================================
+/* 
    DARK THEME
-================================================================= */
+ */
 html.theme-dark {
     background-color: #111827;
     color: #f9fafb;
@@ -147,7 +147,7 @@ html.theme-dark {
         filter: invert(1) grayscale(100%) brightness(200%);
     }
 
-/* --- Task List Styles (Đã cập nhật) --- */
+/* --- Task List Styles --- */
 .task-list {
     border-radius: 8px;
     overflow: hidden;
@@ -213,7 +213,7 @@ html.theme-dark .btn-check-task {
         color: #22c55e;
     }
 
-/* SỬA LỖI CLICK: Định nghĩa khu vực click riêng */
+/* Định nghĩa khu vực click riêng */
 .task-content-link {
     flex-grow: 1;
     text-decoration: none;
@@ -280,9 +280,9 @@ html.theme-dark .priority-low {
         text-decoration: line-through;
     }
 
-/* =================================================================
+/* 
    SUBTASK STYLES 
-================================================================= */
+ */
 .subtask-item {
     padding: 8px 12px;
     border-radius: 6px;
@@ -311,9 +311,9 @@ html.theme-dark .add-subtask-form .input-group-text {
     border-color: #4b5563;
 }
 
-/* =================================================================
+/* 
    CALENDAR STYLES 
-================================================================= */
+ */
 .calendar-grid {
     display: flex;
     flex-direction: column;
@@ -333,7 +333,7 @@ html.theme-dark .add-subtask-form .input-group-text {
 .calendar-body {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    /* <<< SỬA ĐỔI TẠI ĐÂY: TỪ 6 XUỐNG 5 HÀNG >>> */
+    /* 5 hàng lịch */
     grid-template-rows: repeat(5, 1fr);
     flex-grow: 1;
 }
@@ -465,9 +465,9 @@ html.theme-light .auth-body {
 }
 
 
-/* =================================================================
+/* 
    LIGHT THEME
-================================================================= */
+ */
 html.theme-light .subtask-item {
     border: 1px solid #dee2e6;
 }
